@@ -1,0 +1,4 @@
+openpyxl>=3.1
+requests>=2.31
+kivy>=2.3
+plyer>=2.1
