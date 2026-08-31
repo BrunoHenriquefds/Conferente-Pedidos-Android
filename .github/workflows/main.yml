@@ -52,15 +52,37 @@ jobs:
           python --version
           git --version
 
+          echo "Primeira preparacao..."
           buildozer android debug || true
 
-          VENV=".buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/venv"
+          echo "Aplicando correcao..."
 
-          if [ -d "$VENV" ]; then
-            echo "Corrigindo ambiente interno do pip..."
-            rm -rf "$VENV"
-          fi
+          python - <<'PY'
+          from pathlib import Path
 
+          p = Path(".buildozer/android/platform/python-for-android/pythonforandroid/build.py")
+
+          if not p.exists():
+              raise SystemExit("Arquivo build.py nao encontrado")
+
+          text = p.read_text()
+
+          old = "shprint(host_python, '-m', 'venv', 'venv')"
+          new = "shprint(host_python, '-m', 'venv', '--clear', 'venv')"
+
+          if old in text:
+              text = text.replace(old, new)
+              p.write_text(text)
+              print("Correcao aplicada.")
+          elif new in text:
+              print("Correcao ja estava aplicada.")
+          else:
+              raise SystemExit("Linha esperada nao encontrada")
+          PY
+
+          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/venv
+
+          echo "Gerando APK..."
           buildozer android debug
 
       - name: Guardar APK
