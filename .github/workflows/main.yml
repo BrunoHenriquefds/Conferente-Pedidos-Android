@@ -11,8 +11,13 @@ jobs:
       - name: Baixar projeto
         uses: actions/checkout@v4
 
+      - name: Preparar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Preparar Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -21,12 +26,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-pip \
-            python3-venv \
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
             autoconf \
             libtool \
             pkg-config \
@@ -38,13 +40,27 @@ jobs:
             libffi-dev \
             libssl-dev
 
+      - name: Conferir Python
+        run: |
+          python --version
+          python3 --version
+          which python
+          which python3
+
       - name: Instalar Buildozer
         run: |
-          python3 -m pip install --upgrade pip
-          pip install buildozer cython==0.29.36
+          python -m pip install --upgrade pip
+          python -m pip install buildozer cython==0.29.36
+
+      - name: Limpar compilacao anterior
+        run: |
+          rm -rf .buildozer
 
       - name: Gerar APK
+        env:
+          PATH: ${{ env.pythonLocation }}/bin:${{ env.PATH }}
         run: |
+          python --version
           buildozer android debug
 
       - name: Guardar APK
