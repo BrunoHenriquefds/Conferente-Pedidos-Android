@@ -46,6 +46,7 @@ jobs:
       - name: Limpar compilacao anterior
         run: |
           rm -rf .buildozer
+
       - name: Gerar APK
         run: |
           python --version
