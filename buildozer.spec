@@ -5,7 +5,7 @@ package.domain = br.com.brunohenrique
 source.dir = .
 source.include_exts = py,kv,png,jpg,jpeg,wav,txt,xlsx
 version = 1.0.0
-requirements = python3,kivy,openpyxl,requests,plyer
+requirements = python3==3.11.6,hostpython3==3.11.6,kivy,openpyxl,requests,plyer
 orientation = portrait
 fullscreen = 0
 android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
