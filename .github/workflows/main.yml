@@ -46,11 +46,20 @@ jobs:
       - name: Limpar compilacao anterior
         run: |
           rm -rf .buildozer
-
       - name: Gerar APK
         run: |
           python --version
           git --version
+
+          buildozer android debug || true
+
+          VENV=".buildozer/android/platform/build-arm64-v8a_armeabi-v7a/build/venv"
+
+          if [ -d "$VENV" ]; then
+            echo "Corrigindo ambiente interno do pip..."
+            rm -rf "$VENV"
+          fi
+
           buildozer android debug
 
       - name: Guardar APK
