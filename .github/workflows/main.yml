@@ -25,27 +25,18 @@ jobs:
       - name: Instalar dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo6 \
-            cmake \
-            libffi-dev \
-            libssl-dev
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config \
+          zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 \
+          cmake libffi-dev libssl-dev
 
-      - name: Conferir Python
+      - name: Verificar ambiente
         run: |
           python --version
-          python3 --version
+          git --version
+          java -version
           which python
-          which python3
+          which git
+          which java
 
       - name: Instalar Buildozer
         run: |
@@ -57,10 +48,9 @@ jobs:
           rm -rf .buildozer
 
       - name: Gerar APK
-        env:
-          PATH: ${{ env.pythonLocation }}/bin:${{ env.PATH }}
         run: |
           python --version
+          git --version
           buildozer android debug
 
       - name: Guardar APK
