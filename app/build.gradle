@@ -1,5 +1,10 @@
 plugins { id 'com.android.application' }
 
 android { namespace 'com.bruno.conferente'; compileSdk 35
-    defaultConfig { applicationId 'com.bruno.conferente'; minSdk 26; targetSdk 35; versionCode 33; versionName '31.2.0' }
+    defaultConfig { applicationId 'com.bruno.conferente'; minSdk 26; targetSdk 35; versionCode 34; versionName '31.3.0' }
+}
+
+
+dependencies {
+    implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
 }
