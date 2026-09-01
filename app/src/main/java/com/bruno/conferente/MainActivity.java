@@ -675,5 +675,65 @@ public class MainActivity extends Activity {
         static void put(ZipOutputStream z,String n,String s)throws Exception{z.putNextEntry(new ZipEntry(n));z.write(s.getBytes("UTF-8"));z.closeEntry();}
         static String xml(String s){return(s==null?"":s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");}
         static String letters(int n){String s="";while(n>0){n--;s=(char)('A'+n%26)+s;n/=26;}return s;}
+        void insertWithdrawalItem(long batchId,String code,String desc,int expected,String loc){
+            SQLiteDatabase d=getWritableDatabase();
+            ContentValues v=new ContentValues();
+            v.put("batch_id",batchId);
+            v.put("code",normalizeDbCode(code));
+            v.put("description",desc);
+            v.put("expected",expected);
+            v.put("checked",0);
+            v.put("location_ss",loc);
+            v.put("status","PENDENTE");
+            d.insert("withdrawal_items",null,v);
+        }
+
+        String getBatchType(long batchId){
+            try(Cursor c=getReadableDatabase().rawQuery("SELECT COALESCE(type,'PEDIDOS') FROM batches WHERE id=?",new String[]{String.valueOf(batchId)})){
+                if(c.moveToFirst()) return c.getString(0);
+            }catch(Exception ignored){}
+            return "PEDIDOS";
+        }
+
+        static String normalizeDbCode(String s){
+            if(s==null)return "";
+            s=s.trim();
+            if(s.endsWith(".0")) s=s.substring(0,s.length()-2);
+            return s.replaceAll("\\s+","");
+        }
+
+        static class WithdrawalScanResult{
+            static final int OK=1, NOT_FOUND=2, LIMIT_REACHED=3;
+            int status,checked,expected;
+            WithdrawalScanResult(int s,int c,int e){status=s;checked=c;expected=e;}
+        }
+
+        WithdrawalScanResult scanWithdrawal(long batchId,String rawCode){
+            String code=normalizeDbCode(rawCode);
+            SQLiteDatabase d=getWritableDatabase();
+            d.beginTransaction();
+            try(Cursor c=d.rawQuery("SELECT id,expected,checked FROM withdrawal_items WHERE batch_id=? AND code=? LIMIT 1",
+                    new String[]{String.valueOf(batchId),code})){
+                if(!c.moveToFirst()){
+                    d.setTransactionSuccessful();
+                    return new WithdrawalScanResult(WithdrawalScanResult.NOT_FOUND,0,0);
+                }
+                long id=c.getLong(0);
+                int exp=c.getInt(1), chk=c.getInt(2);
+                if(chk>=exp){
+                    d.setTransactionSuccessful();
+                    return new WithdrawalScanResult(WithdrawalScanResult.LIMIT_REACHED,chk,exp);
+                }
+                chk++;
+                ContentValues v=new ContentValues();
+                v.put("checked",chk);
+                v.put("status",chk>=exp?"CONFERIDO":"PARCIAL");
+                d.update("withdrawal_items",v,"id=?",new String[]{String.valueOf(id)});
+                d.setTransactionSuccessful();
+                return new WithdrawalScanResult(WithdrawalScanResult.OK,chk,exp);
+            }finally{ d.endTransaction(); }
+        }
+
+
     }
 }
