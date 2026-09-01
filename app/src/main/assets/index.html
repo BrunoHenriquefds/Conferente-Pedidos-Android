@@ -120,17 +120,67 @@ button{-webkit-tap-highlight-color:transparent}
   .toolbar{grid-template-columns:minmax(0,1fr) 70px 108px 25px}
   .head,.row{grid-template-columns:78px minmax(112px,1fr) 27px 31px 40px 58px 52px}
 }
+
+/* V31.3.3 - drawer lateral + visualizador de capa */
+.app{
+  grid-template-columns:minmax(0,1fr) 17.5% !important;
+  position:relative;
+}
+.side{
+  position:fixed !important;
+  z-index:80;
+  left:0; top:0; bottom:0;
+  width:min(260px,24vw);
+  transform:translateX(-101%);
+  transition:transform .18s ease-out;
+  box-shadow:10px 0 30px rgba(0,0,0,.38);
+}
+.app.drawerOpen .side{transform:translateX(0)}
+.main{grid-column:1}
+.detail{grid-column:2}
+.drawerToggle{
+  position:fixed;z-index:70;left:8px;top:calc(env(safe-area-inset-top,0px) + 7px);
+  width:30px;height:30px;border:1px solid #30485e;border-radius:5px;
+  background:#0b1926;color:#eef6ff;font-size:20px;line-height:26px;padding:0;
+}
+.drawerShade{
+  display:none;position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.38)
+}
+.app.drawerOpen .drawerShade{display:block}
+.main{padding-left:44px !important}
+.side .hamb{display:block}
+
+/* capa clicável */
+.cover{cursor:zoom-in}
+.coverModal{
+  display:none;position:fixed;inset:0;z-index:150;background:rgba(2,8,14,.97);
+  align-items:center;justify-content:center;padding:18px 52px
+}
+.coverModal.open{display:flex}
+.coverModal img{
+  max-width:92vw;max-height:88vh;object-fit:contain;
+  box-shadow:0 12px 45px rgba(0,0,0,.55)
+}
+.coverClose{
+  position:absolute;left:18px;top:14px;width:34px;height:34px;border:0;
+  background:transparent;color:white;font-size:32px;line-height:30px
+}
+.coverCount{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  color:#e8eef5;font-size:13px;font-weight:bold
+}
+
 </style>
 </head>
 <body>
-<div class="app" id="appRoot">
+<div class="app" id="appRoot"><button class="drawerToggle" onclick="toggleMenu()" aria-label="Abrir menu">☰</button><div class="drawerShade" onclick="closeMenu()"></div>
 <aside class="side">
   <div class="brand">
     <div class="brandIcon">
       <svg viewBox="0 0 40 44"><path d="M8 10 20 4l12 6v17L20 34 8 27z"/><path d="M8 10l12 7 12-7M20 17v17"/><path class="check" d="m17 31 5 5 11-13"/></svg>
     </div>
     <div><b>Conferente<br>Pedidos Online</b><div class="v">V31</div></div>
-    <button class="hamb" onclick="toggleMenu()" aria-label="Menu">☰</button>
+    
   </div>
 
   <button class="listbtn" onclick="Android.chooseBatch()" id="batchName">Selecione uma lista</button>
@@ -193,7 +243,7 @@ button{-webkit-tap-highlight-color:transparent}
 
 <aside class="detail">
   <div class="detailHead"><h3>DETALHES DO ITEM</h3><span class="expand">↗</span></div>
-  <img id="cover" class="cover" alt="">
+  <img id="cover" class="cover" alt="" onclick="openCoverModal()">
   <div id="dtitle" class="title">Selecione um item</div>
   <div id="dauthor" class="author"></div>
   <div id="details"></div>
@@ -201,9 +251,22 @@ button{-webkit-tap-highlight-color:transparent}
   <button class="action gray" onclick="Android.searchWeb()">◎&nbsp; PESQUISAR NA WEB</button>
 </aside>
 </div>
+<div id="coverModal" class="coverModal" onclick="if(event.target===this)closeCoverModal()">
+<button class="coverClose" onclick="closeCoverModal()">×</button>
+<div class="coverCount">1 / 1</div>
+<img id="coverLarge" alt="Capa ampliada">
+</div>
 <div id="toast" class="toast"></div>
 <script>
-let data=[], selected=null, mode='items', recent=[];function toggleMenu(){document.getElementById('appRoot').classList.toggle('menuClosed');}
+let data=[], selected=null, mode='items', recent=[];function toggleMenu(){document.getElementById('appRoot').classList.toggle('drawerOpen');}
+function closeMenu(){document.getElementById('appRoot').classList.remove('drawerOpen');}
+function openCoverModal(){
+  const c=document.getElementById('cover');
+  if(!c || !c.src){showToast('Nenhuma capa disponível',false);return;}
+  document.getElementById('coverLarge').src=c.src;
+  document.getElementById('coverModal').classList.add('open');
+}
+function closeCoverModal(){document.getElementById('coverModal').classList.remove('open');}
 function setMode(m){mode=m;mi.classList.toggle('on',m==='items');mp.classList.toggle('on',m==='packages');Android.setMode(m);}
 function doScan(){let v=scan.value.trim();if(!v)return;Android.scan(v,mode);scan.value='';scan.focus();}
 function setData(json){data=JSON.parse(json||'[]');render();}
