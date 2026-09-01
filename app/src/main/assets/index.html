@@ -3,118 +3,122 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <style>
-:root{
-  --bg:#07111b;--panel:#0a1621;--panel2:#0c1925;--line:#263746;
-  --blue:#1477e9;--green:#49e53f;--red:#ff4343;--yellow:#ffc400;
-  --muted:#9eabb8;--text:#eef4fb
+:root {
+  --bg:#07111b; --panel:#0a1621; --panel2:#0c1925; --line:#263746;
+  --blue:#1477e9; --blue2:#1c82f4; --green:#49e53f; --red:#ff4343;
+  --yellow:#ffc400; --muted:#9eabb8; --text:#eef4fb;
 }
 *{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-body{font-size:12px}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+body{font-size:10px}
 button,input,select{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
 .app{
-  width:100vw;height:100dvh;
-  display:grid;
-  grid-template-columns:minmax(168px,18vw) minmax(0,1fr) minmax(165px,18vw);
-  background:var(--bg)
+  width:100vw;height:100dvh;display:grid;
+  grid-template-columns:18.7% minmax(0,1fr) 17.5%;
+  background:radial-gradient(circle at 70% 5%,rgba(19,66,110,.12),transparent 28%),var(--bg);
 }
 .side{
-  min-width:0;background:linear-gradient(180deg,#0b1a29,#091522);
-  padding:12px 10px;border-right:1px solid #243343;overflow-y:auto;overflow-x:hidden
+  min-width:0;background:linear-gradient(180deg,#0b1a29 0%,#091522 100%);
+  padding:7px 7px 6px;border-right:1px solid #243343;overflow-y:auto;overflow-x:hidden;
 }
-.brand{display:grid;grid-template-columns:34px 1fr 28px;gap:9px;align-items:center;margin-bottom:12px}
-.logoBox{width:31px;height:31px;border:2px solid #eaf3ff;border-radius:5px;position:relative}
-.logoBox:after{content:"✓";position:absolute;right:-7px;bottom:-9px;color:#2588ff;font-size:23px;font-weight:bold}
-.brand b{font-size:16px;line-height:1.08;white-space:nowrap}
-.v{color:#2588ff;font-size:13px;margin-top:3px}
-.hamb{border:0;background:transparent;color:white;font-size:22px;padding:3px;cursor:pointer}
-.listbtn{width:100%;background:#152b42;color:white;border:0;border-radius:6px;padding:12px 8px;font-size:13px;margin-bottom:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:5px;margin:2px 0;font-size:12.5px;cursor:pointer;white-space:nowrap}
-.nav:hover,.nav.active{background:#123c73}
-.ico{width:20px;text-align:center;color:#c7d7e7;font-weight:bold}
-.sep{border-top:1px solid #2a3947;margin:6px 0}
-.foot{margin-top:10px;color:#9cabb9;font-size:11px;line-height:1.5}
+.brand{display:grid;grid-template-columns:30px 1fr 22px;gap:7px;align-items:center;margin:0 0 7px}
+.brandIcon{width:28px;height:30px}
+.brandIcon svg{width:100%;height:100%;fill:none;stroke:#edf5ff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.brandIcon .check{stroke:#1b82f4;stroke-width:2.2}
+.brand b{font-size:13.2px;line-height:1.02;white-space:nowrap;letter-spacing:-.15px}
+.v{color:#2c8cf6;font-size:10.5px;margin-top:2px}
+.hamb{border:0;background:transparent;color:#f4f7fb;font-size:19px;padding:0;line-height:1;cursor:pointer}
+.listbtn{width:100%;height:33px;background:#152b42;color:white;border:0;border-radius:5px;padding:0 7px;font-size:10.8px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;align-items:center;gap:6px;height:25px;padding:0 5px;border-radius:4px;margin:1px 0;font-size:9.7px;cursor:pointer;white-space:nowrap;color:#eef4fb}
+.nav:hover,.nav.active{background:linear-gradient(90deg,#0d4d98,#164f91)}
+.navsvg{width:14px;height:14px;min-width:14px;fill:none;stroke:#dbe6f2;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.greenico{stroke:#35df48} .redico{stroke:#ff4848}
+.sep{border-top:1px solid #2a3947;margin:4px 0}
+.foot{margin-top:4px;padding-top:4px;color:#a9b4c0;font-size:8.5px;line-height:1.45;border-top:1px solid #253442}
+.themeRow{display:flex;justify-content:space-between;align-items:center}
+.switch{width:26px;height:14px;border-radius:8px;background:#1979e7;position:relative}
+.switch:after{content:"";position:absolute;width:10px;height:10px;right:2px;top:2px;border-radius:50%;background:white}
 
-.main{padding:10px 10px 9px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
-.scanTitle{color:#2588ff;font-weight:bold;font-size:11px;margin:0 0 6px}
-.scanrow{display:grid;grid-template-columns:minmax(0,1fr) 88px 174px;gap:8px;align-items:stretch}
-.scan{width:100%;height:46px;font-size:16px;padding:0 12px;border:1px solid #b9bdc1;border-radius:5px;min-width:0}
-.blue{background:var(--blue);color:white;border:0;border-radius:4px;font-weight:bold;font-size:14px}
-.mode{height:46px;border:1px solid #2a3947;border-radius:7px;padding:4px;display:flex;position:relative;min-width:0}
-.mode:before{content:'MODO';position:absolute;top:-15px;left:6px;color:#b8c0c9;font-size:9px}
-.mode button{flex:1;min-width:0;border:0;padding:7px 5px;background:#162332;color:white;font-size:12.5px}
-.mode .on{background:var(--blue)}
+.main{padding:6px 8px 6px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.scanTitle{color:#2a8cff;font-weight:700;font-size:8.8px;margin:0 0 4px;letter-spacing:.1px}
+.scanrow{display:grid;grid-template-columns:minmax(0,1fr) 66px 142px;gap:6px;align-items:stretch}
+.scan{width:100%;height:34px;font-size:11.8px;padding:0 10px;border:1px solid #c4c7ca;border-radius:4px;min-width:0;color:#4a4e52;background:#f4f5f6;outline:none}
+.blue{height:34px;background:linear-gradient(#2088f7,#1574df);color:white;border:0;border-radius:4px;font-weight:bold;font-size:10.8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.modeWrap{position:relative}
+.modeLabel{position:absolute;left:4px;top:-10px;color:#aeb7c2;font-size:7.7px;z-index:2}
+.mode{height:34px;border:1px solid #2a3947;border-radius:5px;padding:3px;display:flex;min-width:0;background:#0a151f}
+.mode button{flex:1;min-width:0;border:0;border-radius:3px;padding:0 4px;background:#172433;color:white;font-size:9.8px}
+.mode .on{background:linear-gradient(#2189f8,#1676e5)}
 
-.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:12px 0 8px}
-.card{border:1px solid var(--line);background:var(--panel2);border-radius:7px;padding:8px;min-width:0;min-height:66px;overflow:hidden}
-.card label{color:#b5bec8;font-weight:bold;font-size:10px;white-space:nowrap}
-.card strong{display:block;font-size:19px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card small{font-size:9.5px;color:#c1c8d0}
+.cards{display:grid;grid-template-columns:1fr 1.25fr 1.05fr .95fr 1.18fr;gap:5px;margin:7px 0 6px}
+.card{border:1px solid var(--line);background:linear-gradient(180deg,#0d1b27,#0a1621);border-radius:5px;padding:5px 6px;min-width:0;height:51px;overflow:hidden}
+.card label{color:#b5bec8;font-weight:bold;font-size:7.8px;white-space:nowrap}
+.card strong{display:block;font-size:15px;line-height:1;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card small{font-size:7.6px;color:#c1c8d0;line-height:1.1}
 .cblue{color:#3a92ff}.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}
 
-.tablebox{border:1px solid #2a3a49;border-radius:7px;overflow:hidden;flex:1;min-height:0;background:var(--panel)}
-.toolbar{height:40px;display:grid;grid-template-columns:minmax(0,1fr) 92px 135px;border-bottom:1px solid #2a3a49}
-.toolbar input,.toolbar select{min-width:0;background:var(--panel);color:white;border:0;border-right:1px solid #2a3a49;padding:0 9px;font-size:11px}
-.toolbar select{padding-right:3px}
+.tablebox{border:1px solid #2a3a49;border-radius:5px;overflow:hidden;flex:1;min-height:0;background:var(--panel);box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+.toolbar{height:32px;display:grid;grid-template-columns:minmax(0,1fr) 75px 115px 28px;border-bottom:1px solid #2a3a49;background:#0b1722}
+.toolbar input,.toolbar select{min-width:0;background:#0b1722;color:white;border:0;border-right:1px solid #2a3a49;padding:0 7px;font-size:8.8px;outline:none}
+.toolbar input::placeholder{color:#8f9aa6}
+.toolbar select{padding-right:1px}
+.listIcon{display:flex;align-items:center;justify-content:center;font-size:14px;color:#c8d4df}
 .head,.row{
-  display:grid;
-  grid-template-columns:102px minmax(145px,1fr) 34px 40px 48px 72px 66px;
-  align-items:center;padding:0 8px;column-gap:4px
+  display:grid;grid-template-columns:83px minmax(125px,1fr) 28px 32px 42px 61px 56px;
+  align-items:center;padding:0 6px;column-gap:3px
 }
-.head{height:34px;font-weight:bold;color:#bfc8d2;font-size:8.8px;border-bottom:1px solid #2a3a49}
+.head{height:27px;font-weight:bold;color:#bdc7d1;font-size:6.9px;border-bottom:1px solid #2a3a49;background:#0a1621}
 .head>div,.row>div{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rows{overflow:auto;height:calc(100% - 74px)}
-.row{min-height:42px;border-bottom:1px solid #22313f;cursor:pointer;font-size:10.5px}
-.row.sel{background:#12355d;outline:1px solid #1682ff}
+.rows{overflow:auto;height:calc(100% - 59px);scrollbar-width:thin}
+.row{min-height:31px;border-bottom:1px solid #22313f;cursor:pointer;font-size:8.3px}
+.row.sel{background:linear-gradient(90deg,#153c69,#123256);outline:1px solid #1784ff;outline-offset:-1px}
 .desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.desc small{display:block;color:#9eaab6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px}
-.status{font-weight:bold;font-size:9.5px}
-.empty{text-align:center;padding:35px 8px;color:#9ba7b3}
+.desc small{display:block;color:#9eaab6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:7.2px}
+.status{font-weight:bold;font-size:7.3px}
+.empty{text-align:center;padding:27px 8px;color:#9ba7b3;font-size:8.5px}
 
-.recent{height:59px;border:1px solid #2a3a49;border-radius:7px;margin-top:8px;padding:7px 9px;overflow:hidden}
-.recent b{display:block;margin-bottom:5px;font-size:10px}
-.chips{display:flex;gap:16px;overflow:hidden;white-space:nowrap}
-.chip{color:#dbe5ee;font-size:10px}
-.chip:before{content:'●';color:var(--green);margin-right:5px}
+.legend{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);display:none}
+.recent{height:45px;border:1px solid #2a3a49;border-radius:5px;margin-top:5px;padding:5px 7px;overflow:hidden;background:#0a1621}
+.recent b{display:block;margin-bottom:4px;font-size:7.8px;color:#c8d1dc}
+.chips{display:flex;gap:13px;overflow:hidden;white-space:nowrap}
+.chip{color:#dbe5ee;font-size:8px;line-height:1.15}
+.chip:before{content:'●';color:var(--green);margin-right:4px;font-size:7px}
 
-.detail{min-width:0;background:#091522;padding:10px 9px;border-left:1px solid #243343;overflow-y:auto;overflow-x:hidden}
-.detail h3{font-size:10.5px;color:#c8d1da;margin:0 0 8px}
-.cover{width:min(112px,75%);aspect-ratio:2/3;max-height:158px;object-fit:contain;background:#111d28;display:block;margin:0 auto 8px;border-radius:3px}
-.title{font-weight:bold;font-size:12px;margin-bottom:4px;line-height:1.2}
-.author{color:#9faab6;margin-bottom:7px;font-size:10px}
-.dline{display:flex;justify-content:space-between;border-top:1px solid #23313f;padding:4px 0;gap:6px;font-size:9.5px}
-.dline span{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.dline span:first-child{color:#aab5c0;flex:0 0 47%}
+.detail{min-width:0;background:#091522;padding:7px 7px 6px;border-left:1px solid #243343;overflow-y:auto;overflow-x:hidden}
+.detailHead{display:flex;align-items:center;justify-content:space-between}
+.detail h3{font-size:8.4px;color:#c8d1da;margin:0 0 5px}
+.expand{width:17px;height:17px;border:1px solid #1477e9;border-radius:50%;color:#2d8df4;display:flex;align-items:center;justify-content:center;font-size:9px}
+.cover{width:min(89px,72%);height:127px;object-fit:contain;background:#111d28;display:block;margin:0 auto 6px;border-radius:2px;border:1px solid #1c2b39}
+.title{font-weight:bold;font-size:9.4px;margin-bottom:2px;line-height:1.15}
+.author{color:#9faab6;margin-bottom:4px;font-size:8px}
+.dline{display:flex;justify-content:space-between;border-top:1px solid #23313f;padding:3px 0;gap:4px;font-size:7.5px;line-height:1.1}
+.dline span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dline span:first-child{color:#aab5c0;flex:0 0 46%}
 .dline span:last-child{text-align:right}
-.action{width:100%;padding:9px 5px;margin-top:7px;border:0;border-radius:4px;background:var(--blue);color:white;font-weight:bold;font-size:10.5px}
+.action{width:100%;height:29px;padding:0 4px;margin-top:5px;border:0;border-radius:4px;background:linear-gradient(#2088f7,#1574df);color:white;font-weight:bold;font-size:8.1px}
 .action.gray{background:#283645}
-.toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#172738;border:1px solid #3c536a;padding:9px 14px;border-radius:6px;display:none;z-index:99;font-size:11px}
+.toast{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#172738;border:1px solid #3c536a;padding:6px 10px;border-radius:5px;display:none;z-index:99;font-size:8.5px}
 
-.app.menuClosed{grid-template-columns:56px minmax(0,1fr) minmax(165px,18vw)}
-.menuClosed .side{padding-left:7px;padding-right:7px}
+.app.menuClosed{grid-template-columns:43px minmax(0,1fr) 17.5%}
+.menuClosed .side{padding-left:4px;padding-right:4px}
 .menuClosed .brand{grid-template-columns:1fr;justify-items:center}
 .menuClosed .brand>div:nth-child(2),.menuClosed .listbtn,.menuClosed .nav span.txt,.menuClosed .sep,.menuClosed .foot{display:none}
-.menuClosed .nav{justify-content:center;padding:9px 2px}
-.menuClosed .ico{font-size:15px}
+.menuClosed .brandIcon{display:none}
+.menuClosed .nav{justify-content:center;padding:0}
+.menuClosed .navsvg{width:16px;height:16px}
 .menuClosed .hamb{display:block}
 
-@media (max-width:1000px){
-  .app{grid-template-columns:160px minmax(0,1fr) 158px}
-  .side{padding:9px 7px}
-  .brand{grid-template-columns:29px 1fr 24px;gap:7px}
-  .logoBox{width:27px;height:27px}
-  .brand b{font-size:14px}.v{font-size:11px}
-  .nav{font-size:11px;padding:7px 6px}.listbtn{font-size:11.5px;padding:10px 6px}
-  .main{padding:8px}
-  .scanrow{grid-template-columns:minmax(0,1fr) 78px 150px;gap:6px}
-  .scan{height:42px;font-size:14px}.mode{height:42px}.mode button{font-size:11px}.blue{font-size:12px}
-  .cards{gap:5px;margin:10px 0 6px}.card{padding:6px;min-height:58px}.card strong{font-size:16px}.card label{font-size:8.5px}
-  .toolbar{grid-template-columns:minmax(0,1fr) 78px 110px;height:36px}
-  .toolbar input,.toolbar select{font-size:9.5px;padding:0 6px}
-  .head,.row{grid-template-columns:86px minmax(120px,1fr) 30px 34px 42px 62px 58px;padding:0 6px;column-gap:3px}
-  .head{font-size:7.6px;height:31px}.rows{height:calc(100% - 67px)}.row{font-size:9.2px;min-height:38px}
-  .status{font-size:8px}.recent{height:51px;margin-top:6px;padding:6px 8px}
-  .detail{padding:8px 7px}.cover{width:min(94px,72%);max-height:138px}.title{font-size:10.5px}.dline{font-size:8.5px}.action{font-size:9px}
+@media (min-width:900px){
+  body{font-size:11px}
+}
+@media (max-width:760px){
+  .app{grid-template-columns:18.7% minmax(0,1fr) 17.5%}
+  .brand b{font-size:12px}
+  .nav{font-size:9.2px}
+  .scanrow{grid-template-columns:minmax(0,1fr) 62px 136px}
+  .toolbar{grid-template-columns:minmax(0,1fr) 70px 108px 25px}
+  .head,.row{grid-template-columns:78px minmax(112px,1fr) 27px 31px 40px 58px 52px}
 }
 </style>
 </head>
@@ -122,36 +126,47 @@ button,input,select{font:inherit}
 <div class="app" id="appRoot">
 <aside class="side">
   <div class="brand">
-    <div class="logoBox"></div>
-    <div><b>Conferente<br>Pedidos Online</b><div class="v">V31 ANDROID</div></div>
+    <div class="brandIcon">
+      <svg viewBox="0 0 40 44"><path d="M8 10 20 4l12 6v17L20 34 8 27z"/><path d="M8 10l12 7 12-7M20 17v17"/><path class="check" d="m17 31 5 5 11-13"/></svg>
+    </div>
+    <div><b>Conferente<br>Pedidos Online</b><div class="v">V31</div></div>
     <button class="hamb" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
+
   <button class="listbtn" onclick="Android.chooseBatch()" id="batchName">Selecione uma lista</button>
-  <div class="nav active"><span class="ico">⌂</span><span class="txt">Início</span></div>
-  <div class="nav" onclick="Android.importReport()"><span class="ico">R</span><span class="txt">Importar relatório</span></div>
-  <div class="nav" onclick="Android.importLocations()"><span class="ico">L</span><span class="txt">Importar localizações (SS)</span></div>
-  <div class="nav" onclick="Android.importNegatives()"><span class="ico">N</span><span class="txt">Importar negativos</span></div>
-  <div class="nav" onclick="Android.refreshLocations()"><span class="ico">↻</span><span class="txt">Atualizar localizações</span></div>
+
+  <div class="nav active"><svg class="navsvg" viewBox="0 0 24 24"><path d="M3 11.2 12 4l9 7.2v8.3a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H4.5A1.5 1.5 0 0 1 3 19.5z"/></svg><span class="txt">Início</span></div>
+  <div class="nav" onclick="Android.importReport()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 11h6M9 15h6"/></svg><span class="txt">Importar relatório</span></div>
+  <div class="nav" onclick="Android.importLocations()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M12 22s7-6.1 7-13a7 7 0 1 0-14 0c0 6.9 7 13 7 13z"/><circle cx="12" cy="9" r="2.4"/></svg><span class="txt">Importar localizações (SS)</span></div>
+  <div class="nav" onclick="Android.importNegatives()"><svg class="navsvg redico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg><span class="txt">Importar negativos</span></div>
+  <div class="nav" onclick="Android.refreshLocations()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.2 8.2A7 7 0 0 1 18.3 7M17.8 15.8A7 7 0 0 1 5.7 17"/></svg><span class="txt">Atualizar localizações</span></div>
   <div class="sep"></div>
-  <div class="nav" onclick="Android.exportMissing()"><span class="ico">X</span><span class="txt">Exportar relatório (Excel)</span></div>
-  <div class="nav" onclick="Android.printMissing()"><span class="ico">P</span><span class="txt">Imprimir faltando</span></div>
-  <div class="nav" onclick="Android.newBatch()"><span class="ico">+</span><span class="txt">Nova lista</span></div>
-  <div class="nav" onclick="Android.renameBatch()"><span class="ico">E</span><span class="txt">Renomear lista</span></div>
-  <div class="nav" onclick="Android.deleteBatch()"><span class="ico">-</span><span class="txt">Excluir lista</span></div>
-  <div class="nav" onclick="Android.undoScan()"><span class="ico">↶</span><span class="txt">Desfazer última conferência</span></div>
+  <div class="nav" onclick="Android.exportMissing()"><svg class="navsvg greenico" viewBox="0 0 24 24"><path d="M5 2h10l4 4v16H5z"/><path d="M14 2v5h5M8 10l5 7M13 10l-5 7"/></svg><span class="txt">Exportar relatório (Excel)</span></div>
+  <div class="nav" onclick="Android.printMissing()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3"/><path d="M7 14h10v7H7z"/></svg><span class="txt">Imprimir faltando</span></div>
+  <div class="nav" onclick="Android.newBatch()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg><span class="txt">Nova lista</span></div>
+  <div class="nav" onclick="Android.renameBatch()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M4 20l4.2-1 10.5-10.5-3.2-3.2L5 15.8zM14.8 6l3.2 3.2"/></svg><span class="txt">Renomear lista</span></div>
+  <div class="nav" onclick="Android.deleteBatch()"><svg class="navsvg redico" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></svg><span class="txt">Excluir lista</span></div>
+  <div class="nav" onclick="Android.undoScan()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M9 7H4v-5M4.5 7A9 9 0 1 1 3 15"/></svg><span class="txt">Desfazer última conferência</span></div>
   <div class="sep"></div>
-  <div class="nav" onclick="Android.soundSettings()"><span class="ico">S</span><span class="txt">Configurações de som</span></div>
-  <div class="nav" onclick="Android.coverSearch()"><span class="ico">C</span><span class="txt">Busca de capas</span></div>
-  <div class="nav" onclick="Android.about()"><span class="ico">i</span><span class="txt">Sobre o aplicativo</span></div>
-  <div class="foot">Tema escuro<br>Versão: V31 Android Nativo</div>
+  <div class="nav" onclick="Android.soundSettings()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><span class="txt">Configurações de som</span></div>
+  <div class="nav" onclick="Android.coverSearch()"><svg class="navsvg" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span class="txt">Busca de capas</span></div>
+  <div class="nav" onclick="Android.about()"><svg class="navsvg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 10v7M12 7h.01"/></svg><span class="txt">Sobre o aplicativo</span></div>
+
+  <div class="foot">
+    <div class="themeRow"><span>Tema escuro</span><span class="switch"></span></div>
+    <div>Versão: <span style="color:#2d8df4">V31.2.0</span></div>
+  </div>
 </aside>
 
 <main class="main">
   <div class="scanTitle">BIPE PARA CONFERIR PRODUTOS OU RASTREIOS</div>
   <div class="scanrow">
     <input id="scan" class="scan" placeholder="Bipe ISBN / EAN / SKU ou Rastreio" onkeydown="if(event.key==='Enter')doScan()">
-    <button class="blue" onclick="doScan()">BIPAR</button>
-    <div class="mode"><button id="mi" class="on" onclick="setMode('items')">Itens</button><button id="mp" onclick="setMode('packages')">Pacotes</button></div>
+    <button class="blue" onclick="doScan()">▥&nbsp; BIPAR</button>
+    <div class="modeWrap">
+      <div class="modeLabel">MODO</div>
+      <div class="mode"><button id="mi" class="on" onclick="setMode('items')">Itens</button><button id="mp" onclick="setMode('packages')">Pacotes</button></div>
+    </div>
   </div>
 
   <div class="cards">
@@ -159,14 +174,15 @@ button,input,select{font:inherit}
     <div class="card"><label>CONFERIDOS</label><strong class="green" id="checked">0</strong><small id="pct">(0%)</small></div>
     <div class="card"><label>FALTANDO</label><strong class="red" id="missing">0</strong><small>itens</small></div>
     <div class="card"><label>EXCEDENTES</label><strong id="excess">0</strong><small>itens</small></div>
-    <div class="card"><label>ÚLTIMO BIP</label><strong class="green" style="font-size:13px" id="last">—</strong><small id="lasttime"></small></div>
+    <div class="card"><label>ÚLTIMO BIP</label><strong class="green" style="font-size:10px" id="last">—</strong><small id="lasttime"></small></div>
   </div>
 
   <div class="tablebox">
     <div class="toolbar">
-      <input id="search" placeholder="Pesquisar por código, descrição, comprador..." oninput="render()">
+      <input id="search" placeholder="⌕  Pesquisar por código, descrição, comprador..." oninput="render()">
       <select id="filter" onchange="render()"><option value="all">Todos</option><option value="pending">Pendentes</option><option value="checked">Conferidos</option><option value="missing">Faltando</option></select>
       <select id="sort" onchange="render()"><option value="code">Ordenar: Código</option><option value="desc">Ordenar: Descrição</option><option value="loc">Ordenar: Localização</option></select>
+      <div class="listIcon">☷</div>
     </div>
     <div class="head"><div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div><div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div></div>
     <div id="rows" class="rows"><div class="empty">Nenhuma lista selecionada</div></div>
@@ -176,13 +192,13 @@ button,input,select{font:inherit}
 </main>
 
 <aside class="detail">
-  <h3>DETALHES DO ITEM</h3>
+  <div class="detailHead"><h3>DETALHES DO ITEM</h3><span class="expand">↗</span></div>
   <img id="cover" class="cover" alt="">
   <div id="dtitle" class="title">Selecione um item</div>
   <div id="dauthor" class="author"></div>
   <div id="details"></div>
-  <button class="action" onclick="Android.openCover()">ABRIR IMAGEM</button>
-  <button class="action gray" onclick="Android.searchWeb()">PESQUISAR NA WEB</button>
+  <button class="action" onclick="Android.openCover()">▧&nbsp; ABRIR IMAGEM</button>
+  <button class="action gray" onclick="Android.searchWeb()">◎&nbsp; PESQUISAR NA WEB</button>
 </aside>
 </div>
 <div id="toast" class="toast"></div>
@@ -197,5 +213,8 @@ function scanResult(j){let x=JSON.parse(j);toastMsg(x.message,x.ok);if(x.code){l
 function toastMsg(t,ok=true){toast.textContent=t;toast.style.display='block';toast.style.borderColor=ok?'#2e8b57':'#b33';setTimeout(()=>toast.style.display='none',2200)}
 function render(){let q=search.value.toLowerCase(),f=filter.value,s=sort.value;let a=data.filter(x=>(!q||(x.code+' '+x.description+' '+x.buyer).toLowerCase().includes(q))&&(f==='all'||(f==='checked'&&x.missing===0)||(f==='pending'&&x.missing>0)||(f==='missing'&&x.missing>0)));a.sort((x,y)=>String(s==='desc'?x.description:s==='loc'?x.location:x.code).localeCompare(String(s==='desc'?y.description:s==='loc'?y.location:y.code)));rows.innerHTML=a.length?a.map((x,i)=>`<div class="row ${selected&&selected.id===x.id?'sel':''}" onclick="selectItem(${x.id})"><div>${x.code}</div><div class="desc">${x.description}<small>${x.buyer||''}</small></div><div>${x.qty}</div><div class="green">${x.checked}</div><div class="${x.missing?'red':'green'}">${x.missing}</div><div>${x.location||''}</div><div class="status ${x.missing?'yellow':'green'}">${x.missing?'PENDENTE':'CONFERIDO'}</div></div>`).join(''):'<div class="empty">Nenhum item encontrado</div>';}
 function selectItem(id){selected=data.find(x=>x.id===id);render();if(!selected)return;dtitle.textContent=selected.description;dauthor.textContent=selected.author||'';details.innerHTML=[['Código / ISBN',selected.code],['Quantidade',selected.qty],['Conferido',selected.checked],['Faltando',selected.missing],['Situação',selected.missing?'PENDENTE':'CONFERIDO'],['Localização SS',selected.location||''],['Plataforma',selected.platform||''],['Comprador',selected.buyer||''],['Pedido',selected.order||'']].map(a=>`<div class="dline"><span>${a[0]}:</span><span>${a[1]}</span></div>`).join('');cover.src='';Android.selectItem(id);}
-function setCover(url){cover.src=url||''}
+function setCover(url){
+      if(url){cover.style.display='block';cover.src=url;}
+      else{cover.removeAttribute('src');cover.style.display='block';}
+    }
 </script></body></html>
