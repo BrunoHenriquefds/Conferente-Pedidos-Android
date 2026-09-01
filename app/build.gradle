@@ -1,0 +1,5 @@
+plugins { id 'com.android.application' }
+
+android { namespace 'com.bruno.conferente'; compileSdk 35
+    defaultConfig { applicationId 'com.bruno.conferente'; minSdk 26; targetSdk 35; versionCode 31; versionName '31.0.0' }
+}
