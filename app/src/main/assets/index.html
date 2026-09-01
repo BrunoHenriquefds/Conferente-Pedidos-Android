@@ -1,15 +1,193 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><style>
-*{box-sizing:border-box}body{margin:0;background:#07111b;color:#eef4fb;font-family:Arial,sans-serif;overflow:hidden;font-size:13px}.app{display:grid;grid-template-columns:250px 1fr 230px;height:100vh}.side{background:linear-gradient(180deg,#0b1a29,#091522);padding:18px 14px;border-right:1px solid #243343;overflow:auto}.brand{display:flex;gap:13px;align-items:center;margin-bottom:22px}.cube{font-size:39px}.brand b{font-size:20px;line-height:1.15}.v{color:#1682ff;font-size:16px;margin-top:4px}.listbtn{width:100%;background:#152b42;color:white;border:0;border-radius:4px;padding:17px 10px;font-size:17px;margin-bottom:17px}.nav{padding:13px 10px;border-radius:5px;margin:3px 0;font-size:15px;cursor:pointer}.nav:hover,.nav.active{background:#123c73;color:#fff}.nav i{display:inline-block;width:28px;color:#8fa5ba}.sep{border-top:1px solid #2a3947;margin:7px 0}.foot{margin-top:15px;color:#9cabb9}.main{padding:16px 18px;display:flex;flex-direction:column;min-width:0}.scanTitle{color:#1682ff;font-weight:bold;margin-bottom:8px}.scanrow{display:grid;grid-template-columns:1fr 125px 255px;gap:12px}.scan{height:58px;font-size:21px;padding:0 18px;border:1px solid #bbb;border-radius:5px}.blue{background:#1477e9;color:white;border:0;border-radius:4px;font-weight:bold;font-size:18px}.mode{border:1px solid #2a3947;border-radius:7px;padding:7px;display:flex;position:relative}.mode:before{content:'MODO';position:absolute;top:-18px;left:8px;color:#b8c0c9;font-size:12px}.mode button{flex:1;border:0;padding:10px;background:#162332;color:white;font-size:16px}.mode .on{background:#1477e9}.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 12px}.card{border:1px solid #263746;background:#0c1925;border-radius:7px;padding:12px;min-height:82px}.card label{color:#b5bec8;font-weight:bold}.card strong{display:block;font-size:24px;margin-top:7px}.cblue{color:#3a92ff}.green{color:#49e53f}.red{color:#ff4343}.yellow{color:#ffc400}.tablebox{border:1px solid #2a3a49;border-radius:7px;overflow:hidden;flex:1;min-height:0;background:#0a1621}.toolbar{height:50px;display:grid;grid-template-columns:1fr 130px 240px;border-bottom:1px solid #2a3a49}.toolbar input,.toolbar select{background:#0a1621;color:white;border:0;border-right:1px solid #2a3a49;padding:0 15px;font-size:14px}.head,.row{display:grid;grid-template-columns:150px 1fr 55px 65px 75px 110px 95px;align-items:center;padding:0 14px}.head{height:38px;font-weight:bold;color:#bfc8d2;font-size:11px;border-bottom:1px solid #2a3a49}.rows{overflow:auto;height:calc(100% - 88px)}.row{min-height:50px;border-bottom:1px solid #22313f;cursor:pointer}.row.sel{background:#12355d;outline:1px solid #1682ff}.desc small{display:block;color:#9eaab6;margin-top:2px}.status{font-weight:bold}.recent{height:78px;border:1px solid #2a3a49;border-radius:7px;margin-top:12px;padding:10px 14px}.recent b{display:block;margin-bottom:8px}.chips{display:flex;gap:30px}.chip{color:#dbe5ee}.chip:before{content:'●';color:#49e53f;margin-right:8px}.detail{background:#091522;padding:16px 12px;border-left:1px solid #243343;overflow:auto}.detail h3{font-size:13px;color:#c8d1da;margin:0 0 12px}.cover{width:150px;height:210px;object-fit:contain;background:#111d28;display:block;margin:0 auto 12px;border-radius:3px}.title{font-weight:bold;font-size:16px;margin-bottom:5px}.author{color:#9faab6;margin-bottom:12px}.dline{display:flex;justify-content:space-between;border-top:1px solid #23313f;padding:6px 0;gap:10px}.dline span:first-child{color:#aab5c0}.action{width:100%;padding:13px;margin-top:10px;border:0;border-radius:4px;background:#1477e9;color:white;font-weight:bold;font-size:14px}.action.gray{background:#283645}.empty{text-align:center;padding:60px;color:#9ba7b3}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#172738;border:1px solid #3c536a;padding:12px 20px;border-radius:6px;display:none;z-index:9}
-</style></head><body><div class="app">
-<aside class="side"><div class="brand"><div class="cube">▱</div><div><b>Conferente<br>Pedidos Online</b><div class="v">V31 ANDROID</div></div></div><button class="listbtn" onclick="Android.chooseBatch()" id="batchName">Selecione uma lista</button>
-<div class="nav active">⌂ &nbsp; Início</div><div class="nav" onclick="Android.importReport()">▤ &nbsp; Importar relatório</div><div class="nav" onclick="Android.importLocations()">⌖ &nbsp; Importar localizações (SS)</div><div class="nav" onclick="Android.importNegatives()">⊖ &nbsp; Importar negativos</div><div class="nav" onclick="Android.refreshLocations()">⟳ &nbsp; Atualizar localizações</div><div class="sep"></div><div class="nav" onclick="Android.exportMissing()">▣ &nbsp; Exportar relatório (Excel)</div><div class="nav" onclick="Android.printMissing()">▧ &nbsp; Imprimir faltando</div><div class="nav" onclick="Android.newBatch()">＋ &nbsp; Nova lista</div><div class="nav" onclick="Android.renameBatch()">✎ &nbsp; Renomear lista</div><div class="nav" onclick="Android.deleteBatch()">▣ &nbsp; Excluir lista</div><div class="nav" onclick="Android.undoScan()">↶ &nbsp; Desfazer última conferência</div><div class="sep"></div><div class="nav" onclick="Android.soundSettings()">◖ &nbsp; Configurações de som</div><div class="nav" onclick="Android.coverSearch()">⌕ &nbsp; Busca de capas</div><div class="nav" onclick="Android.about()">ⓘ &nbsp; Sobre o aplicativo</div><div class="foot">Tema escuro&nbsp;&nbsp; ●<br>Versão: V31 Android Nativo</div></aside>
-<main class="main"><div class="scanTitle">BIPE PARA CONFERIR PRODUTOS OU RASTREIOS</div><div class="scanrow"><input id="scan" class="scan" placeholder="Bipe ISBN / EAN / SKU ou Rastreio" onkeydown="if(event.key==='Enter')doScan()"><button class="blue" onclick="doScan()">▥ BIPAR</button><div class="mode"><button id="mi" class="on" onclick="setMode('items')">Itens</button><button id="mp" onclick="setMode('packages')">Pacotes</button></div></div>
-<div class="cards"><div class="card"><label>TOTAL</label><strong class="cblue" id="total">0</strong><small>itens</small></div><div class="card"><label>CONFERIDOS</label><strong class="green" id="checked">0</strong><small id="pct">(0%)</small></div><div class="card"><label>FALTANDO</label><strong class="red" id="missing">0</strong><small>itens</small></div><div class="card"><label>EXCEDENTES</label><strong id="excess">0</strong><small>itens</small></div><div class="card"><label>ÚLTIMO BIP</label><strong class="green" style="font-size:16px" id="last">—</strong><small id="lasttime"></small></div></div>
-<div class="tablebox"><div class="toolbar"><input id="search" placeholder="⌕  Pesquisar por código, descrição, comprador..." oninput="render()"><select id="filter" onchange="render()"><option value="all">Todos</option><option value="pending">Pendentes</option><option value="checked">Conferidos</option><option value="missing">Faltando</option></select><select id="sort" onchange="render()"><option value="code">↕ Ordenar: Código</option><option value="desc">Ordenar: Descrição</option><option value="loc">Ordenar: Localização</option></select></div><div class="head"><div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div><div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div></div><div id="rows" class="rows"><div class="empty">Nenhuma lista selecionada</div></div></div>
-<div class="recent"><b>ÚLTIMOS BIPES</b><div id="chips" class="chips">—</div></div></main>
-<aside class="detail"><h3>DETALHES DO ITEM</h3><img id="cover" class="cover" alt="Capa"><div id="dtitle" class="title">Selecione um item</div><div id="dauthor" class="author"></div><div id="details"></div><button class="action" onclick="Android.openCover()">▧ ABRIR IMAGEM</button><button class="action gray" onclick="Android.searchWeb()">◎ PESQUISAR NA WEB</button></aside></div><div id="toast" class="toast"></div>
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<style>
+:root{
+  --bg:#07111b;--panel:#0a1621;--panel2:#0c1925;--line:#263746;
+  --blue:#1477e9;--green:#49e53f;--red:#ff4343;--yellow:#ffc400;
+  --muted:#9eabb8;--text:#eef4fb
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+body{font-size:12px}
+button,input,select{font:inherit}
+.app{
+  width:100vw;height:100dvh;
+  display:grid;
+  grid-template-columns:minmax(168px,18vw) minmax(0,1fr) minmax(165px,18vw);
+  background:var(--bg)
+}
+.side{
+  min-width:0;background:linear-gradient(180deg,#0b1a29,#091522);
+  padding:12px 10px;border-right:1px solid #243343;overflow-y:auto;overflow-x:hidden
+}
+.brand{display:grid;grid-template-columns:34px 1fr 28px;gap:9px;align-items:center;margin-bottom:12px}
+.logoBox{width:31px;height:31px;border:2px solid #eaf3ff;border-radius:5px;position:relative}
+.logoBox:after{content:"✓";position:absolute;right:-7px;bottom:-9px;color:#2588ff;font-size:23px;font-weight:bold}
+.brand b{font-size:16px;line-height:1.08;white-space:nowrap}
+.v{color:#2588ff;font-size:13px;margin-top:3px}
+.hamb{border:0;background:transparent;color:white;font-size:22px;padding:3px;cursor:pointer}
+.listbtn{width:100%;background:#152b42;color:white;border:0;border-radius:6px;padding:12px 8px;font-size:13px;margin-bottom:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:5px;margin:2px 0;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.nav:hover,.nav.active{background:#123c73}
+.ico{width:20px;text-align:center;color:#c7d7e7;font-weight:bold}
+.sep{border-top:1px solid #2a3947;margin:6px 0}
+.foot{margin-top:10px;color:#9cabb9;font-size:11px;line-height:1.5}
+
+.main{padding:10px 10px 9px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.scanTitle{color:#2588ff;font-weight:bold;font-size:11px;margin:0 0 6px}
+.scanrow{display:grid;grid-template-columns:minmax(0,1fr) 88px 174px;gap:8px;align-items:stretch}
+.scan{width:100%;height:46px;font-size:16px;padding:0 12px;border:1px solid #b9bdc1;border-radius:5px;min-width:0}
+.blue{background:var(--blue);color:white;border:0;border-radius:4px;font-weight:bold;font-size:14px}
+.mode{height:46px;border:1px solid #2a3947;border-radius:7px;padding:4px;display:flex;position:relative;min-width:0}
+.mode:before{content:'MODO';position:absolute;top:-15px;left:6px;color:#b8c0c9;font-size:9px}
+.mode button{flex:1;min-width:0;border:0;padding:7px 5px;background:#162332;color:white;font-size:12.5px}
+.mode .on{background:var(--blue)}
+
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:12px 0 8px}
+.card{border:1px solid var(--line);background:var(--panel2);border-radius:7px;padding:8px;min-width:0;min-height:66px;overflow:hidden}
+.card label{color:#b5bec8;font-weight:bold;font-size:10px;white-space:nowrap}
+.card strong{display:block;font-size:19px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card small{font-size:9.5px;color:#c1c8d0}
+.cblue{color:#3a92ff}.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}
+
+.tablebox{border:1px solid #2a3a49;border-radius:7px;overflow:hidden;flex:1;min-height:0;background:var(--panel)}
+.toolbar{height:40px;display:grid;grid-template-columns:minmax(0,1fr) 92px 135px;border-bottom:1px solid #2a3a49}
+.toolbar input,.toolbar select{min-width:0;background:var(--panel);color:white;border:0;border-right:1px solid #2a3a49;padding:0 9px;font-size:11px}
+.toolbar select{padding-right:3px}
+.head,.row{
+  display:grid;
+  grid-template-columns:102px minmax(145px,1fr) 34px 40px 48px 72px 66px;
+  align-items:center;padding:0 8px;column-gap:4px
+}
+.head{height:34px;font-weight:bold;color:#bfc8d2;font-size:8.8px;border-bottom:1px solid #2a3a49}
+.head>div,.row>div{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rows{overflow:auto;height:calc(100% - 74px)}
+.row{min-height:42px;border-bottom:1px solid #22313f;cursor:pointer;font-size:10.5px}
+.row.sel{background:#12355d;outline:1px solid #1682ff}
+.desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desc small{display:block;color:#9eaab6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px}
+.status{font-weight:bold;font-size:9.5px}
+.empty{text-align:center;padding:35px 8px;color:#9ba7b3}
+
+.recent{height:59px;border:1px solid #2a3a49;border-radius:7px;margin-top:8px;padding:7px 9px;overflow:hidden}
+.recent b{display:block;margin-bottom:5px;font-size:10px}
+.chips{display:flex;gap:16px;overflow:hidden;white-space:nowrap}
+.chip{color:#dbe5ee;font-size:10px}
+.chip:before{content:'●';color:var(--green);margin-right:5px}
+
+.detail{min-width:0;background:#091522;padding:10px 9px;border-left:1px solid #243343;overflow-y:auto;overflow-x:hidden}
+.detail h3{font-size:10.5px;color:#c8d1da;margin:0 0 8px}
+.cover{width:min(112px,75%);aspect-ratio:2/3;max-height:158px;object-fit:contain;background:#111d28;display:block;margin:0 auto 8px;border-radius:3px}
+.title{font-weight:bold;font-size:12px;margin-bottom:4px;line-height:1.2}
+.author{color:#9faab6;margin-bottom:7px;font-size:10px}
+.dline{display:flex;justify-content:space-between;border-top:1px solid #23313f;padding:4px 0;gap:6px;font-size:9.5px}
+.dline span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dline span:first-child{color:#aab5c0;flex:0 0 47%}
+.dline span:last-child{text-align:right}
+.action{width:100%;padding:9px 5px;margin-top:7px;border:0;border-radius:4px;background:var(--blue);color:white;font-weight:bold;font-size:10.5px}
+.action.gray{background:#283645}
+.toast{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#172738;border:1px solid #3c536a;padding:9px 14px;border-radius:6px;display:none;z-index:99;font-size:11px}
+
+.app.menuClosed{grid-template-columns:56px minmax(0,1fr) minmax(165px,18vw)}
+.menuClosed .side{padding-left:7px;padding-right:7px}
+.menuClosed .brand{grid-template-columns:1fr;justify-items:center}
+.menuClosed .brand>div:nth-child(2),.menuClosed .listbtn,.menuClosed .nav span.txt,.menuClosed .sep,.menuClosed .foot{display:none}
+.menuClosed .nav{justify-content:center;padding:9px 2px}
+.menuClosed .ico{font-size:15px}
+.menuClosed .hamb{display:block}
+
+@media (max-width:1000px){
+  .app{grid-template-columns:160px minmax(0,1fr) 158px}
+  .side{padding:9px 7px}
+  .brand{grid-template-columns:29px 1fr 24px;gap:7px}
+  .logoBox{width:27px;height:27px}
+  .brand b{font-size:14px}.v{font-size:11px}
+  .nav{font-size:11px;padding:7px 6px}.listbtn{font-size:11.5px;padding:10px 6px}
+  .main{padding:8px}
+  .scanrow{grid-template-columns:minmax(0,1fr) 78px 150px;gap:6px}
+  .scan{height:42px;font-size:14px}.mode{height:42px}.mode button{font-size:11px}.blue{font-size:12px}
+  .cards{gap:5px;margin:10px 0 6px}.card{padding:6px;min-height:58px}.card strong{font-size:16px}.card label{font-size:8.5px}
+  .toolbar{grid-template-columns:minmax(0,1fr) 78px 110px;height:36px}
+  .toolbar input,.toolbar select{font-size:9.5px;padding:0 6px}
+  .head,.row{grid-template-columns:86px minmax(120px,1fr) 30px 34px 42px 62px 58px;padding:0 6px;column-gap:3px}
+  .head{font-size:7.6px;height:31px}.rows{height:calc(100% - 67px)}.row{font-size:9.2px;min-height:38px}
+  .status{font-size:8px}.recent{height:51px;margin-top:6px;padding:6px 8px}
+  .detail{padding:8px 7px}.cover{width:min(94px,72%);max-height:138px}.title{font-size:10.5px}.dline{font-size:8.5px}.action{font-size:9px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="appRoot">
+<aside class="side">
+  <div class="brand">
+    <div class="logoBox"></div>
+    <div><b>Conferente<br>Pedidos Online</b><div class="v">V31 ANDROID</div></div>
+    <button class="hamb" onclick="toggleMenu()" aria-label="Menu">☰</button>
+  </div>
+  <button class="listbtn" onclick="Android.chooseBatch()" id="batchName">Selecione uma lista</button>
+  <div class="nav active"><span class="ico">⌂</span><span class="txt">Início</span></div>
+  <div class="nav" onclick="Android.importReport()"><span class="ico">R</span><span class="txt">Importar relatório</span></div>
+  <div class="nav" onclick="Android.importLocations()"><span class="ico">L</span><span class="txt">Importar localizações (SS)</span></div>
+  <div class="nav" onclick="Android.importNegatives()"><span class="ico">N</span><span class="txt">Importar negativos</span></div>
+  <div class="nav" onclick="Android.refreshLocations()"><span class="ico">↻</span><span class="txt">Atualizar localizações</span></div>
+  <div class="sep"></div>
+  <div class="nav" onclick="Android.exportMissing()"><span class="ico">X</span><span class="txt">Exportar relatório (Excel)</span></div>
+  <div class="nav" onclick="Android.printMissing()"><span class="ico">P</span><span class="txt">Imprimir faltando</span></div>
+  <div class="nav" onclick="Android.newBatch()"><span class="ico">+</span><span class="txt">Nova lista</span></div>
+  <div class="nav" onclick="Android.renameBatch()"><span class="ico">E</span><span class="txt">Renomear lista</span></div>
+  <div class="nav" onclick="Android.deleteBatch()"><span class="ico">-</span><span class="txt">Excluir lista</span></div>
+  <div class="nav" onclick="Android.undoScan()"><span class="ico">↶</span><span class="txt">Desfazer última conferência</span></div>
+  <div class="sep"></div>
+  <div class="nav" onclick="Android.soundSettings()"><span class="ico">S</span><span class="txt">Configurações de som</span></div>
+  <div class="nav" onclick="Android.coverSearch()"><span class="ico">C</span><span class="txt">Busca de capas</span></div>
+  <div class="nav" onclick="Android.about()"><span class="ico">i</span><span class="txt">Sobre o aplicativo</span></div>
+  <div class="foot">Tema escuro<br>Versão: V31 Android Nativo</div>
+</aside>
+
+<main class="main">
+  <div class="scanTitle">BIPE PARA CONFERIR PRODUTOS OU RASTREIOS</div>
+  <div class="scanrow">
+    <input id="scan" class="scan" placeholder="Bipe ISBN / EAN / SKU ou Rastreio" onkeydown="if(event.key==='Enter')doScan()">
+    <button class="blue" onclick="doScan()">BIPAR</button>
+    <div class="mode"><button id="mi" class="on" onclick="setMode('items')">Itens</button><button id="mp" onclick="setMode('packages')">Pacotes</button></div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><label>TOTAL</label><strong class="cblue" id="total">0</strong><small>itens</small></div>
+    <div class="card"><label>CONFERIDOS</label><strong class="green" id="checked">0</strong><small id="pct">(0%)</small></div>
+    <div class="card"><label>FALTANDO</label><strong class="red" id="missing">0</strong><small>itens</small></div>
+    <div class="card"><label>EXCEDENTES</label><strong id="excess">0</strong><small>itens</small></div>
+    <div class="card"><label>ÚLTIMO BIP</label><strong class="green" style="font-size:13px" id="last">—</strong><small id="lasttime"></small></div>
+  </div>
+
+  <div class="tablebox">
+    <div class="toolbar">
+      <input id="search" placeholder="Pesquisar por código, descrição, comprador..." oninput="render()">
+      <select id="filter" onchange="render()"><option value="all">Todos</option><option value="pending">Pendentes</option><option value="checked">Conferidos</option><option value="missing">Faltando</option></select>
+      <select id="sort" onchange="render()"><option value="code">Ordenar: Código</option><option value="desc">Ordenar: Descrição</option><option value="loc">Ordenar: Localização</option></select>
+    </div>
+    <div class="head"><div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div><div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div></div>
+    <div id="rows" class="rows"><div class="empty">Nenhuma lista selecionada</div></div>
+  </div>
+
+  <div class="recent"><b>ÚLTIMOS BIPES</b><div id="chips" class="chips">—</div></div>
+</main>
+
+<aside class="detail">
+  <h3>DETALHES DO ITEM</h3>
+  <img id="cover" class="cover" alt="">
+  <div id="dtitle" class="title">Selecione um item</div>
+  <div id="dauthor" class="author"></div>
+  <div id="details"></div>
+  <button class="action" onclick="Android.openCover()">ABRIR IMAGEM</button>
+  <button class="action gray" onclick="Android.searchWeb()">PESQUISAR NA WEB</button>
+</aside>
+</div>
+<div id="toast" class="toast"></div>
 <script>
-let data=[], selected=null, mode='items', recent=[];
+let data=[], selected=null, mode='items', recent=[];function toggleMenu(){document.getElementById('appRoot').classList.toggle('menuClosed');}
 function setMode(m){mode=m;mi.classList.toggle('on',m==='items');mp.classList.toggle('on',m==='packages');Android.setMode(m);}
 function doScan(){let v=scan.value.trim();if(!v)return;Android.scan(v,mode);scan.value='';scan.focus();}
 function setData(json){data=JSON.parse(json||'[]');render();}
