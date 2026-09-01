@@ -521,7 +521,35 @@ public class MainActivity extends Activity {
             List<String> shared=new ArrayList<>();byte[]ss=z.get("xl/sharedStrings.xml");if(ss!=null){Document d=parse(ss);NodeList sis=d.getElementsByTagName("si");for(int i=0;i<sis.getLength();i++){Element si=(Element)sis.item(i);NodeList ts=si.getElementsByTagName("t");StringBuilder x=new StringBuilder();for(int j=0;j<ts.getLength();j++)x.append(ts.item(j).getTextContent());shared.add(x.toString());}}
             String sheetPath="xl/worksheets/sheet1.xml";byte[]sh=z.get(sheetPath);if(sh==null)throw new Exception("Planilha sem primeira aba");Document d=parse(sh);NodeList rs=d.getElementsByTagName("row");List<List<String>> out=new ArrayList<>();for(int i=0;i<rs.getLength();i++){Element row=(Element)rs.item(i);NodeList cs=row.getElementsByTagName("c");List<String> vals=new ArrayList<>();for(int j=0;j<cs.getLength();j++){Element c=(Element)cs.item(j);int idx=colIndex(c.getAttribute("r"));while(vals.size()<=idx)vals.add("");String t=c.getAttribute("t"),v="";NodeList vs=c.getElementsByTagName("v");if(vs.getLength()>0)v=vs.item(0).getTextContent();else{NodeList is=c.getElementsByTagName("t");if(is.getLength()>0)v=is.item(0).getTextContent();}if(t.equals("s")&&!v.isEmpty()){int x=Integer.parseInt(v);v=x<shared.size()?shared.get(x):v;}vals.set(idx,v);}out.add(vals);}return out;
         }
-        static Document parse(byte[]b)throws Exception{DocumentBuilderFactory f=DocumentBuilderFactory.newInstance();f.setNamespaceAware(false);f.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);return f.newDocumentBuilder().parse(new ByteArrayInputStream(b));}
+        static Document parse(byte[] b) throws Exception {
+            DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
+            f.setNamespaceAware(false);
+            try { f.setExpandEntityReferences(false); } catch (Exception ignored) {}
+
+            // Alguns recursos de segurança XML não existem no parser nativo do Android.
+            // Aplicamos somente os que o aparelho suportar, sem impedir a leitura do XLSX.
+            String[] trueFeatures = {
+                "http://apache.org/xml/features/disallow-doctype-decl"
+            };
+            String[] falseFeatures = {
+                "http://xml.org/sax/features/external-general-entities",
+                "http://xml.org/sax/features/external-parameter-entities",
+                "http://apache.org/xml/features/nonvalidating/load-external-dtd"
+            };
+
+            for (String feature : trueFeatures) {
+                try { f.setFeature(feature, true); } catch (Exception ignored) {}
+            }
+            for (String feature : falseFeatures) {
+                try { f.setFeature(feature, false); } catch (Exception ignored) {}
+            }
+
+            DocumentBuilder builder = f.newDocumentBuilder();
+            builder.setEntityResolver((publicId, systemId) ->
+                new org.xml.sax.InputSource(new java.io.StringReader(""))
+            );
+            return builder.parse(new ByteArrayInputStream(b));
+        }
         static int colIndex(String r){int n=0;for(char c:r.toCharArray()){if(!Character.isLetter(c))break;n=n*26+(Character.toUpperCase(c)-'A'+1);}return Math.max(0,n-1);}
         static void write(OutputStream out,List<String[]>rows,String sheetName)throws Exception{ZipOutputStream z=new ZipOutputStream(out);put(z,"[Content_Types].xml","<?xml version=\"1.0\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/><Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/><Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/></Types>");put(z,"_rels/.rels","<?xml version=\"1.0\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>");put(z,"xl/workbook.xml","<?xml version=\"1.0\"?><workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\""+xml(sheetName)+"\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>");put(z,"xl/_rels/workbook.xml.rels","<?xml version=\"1.0\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/><Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/></Relationships>");put(z,"xl/styles.xml","<?xml version=\"1.0\"?><styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><fonts count=\"2\"><font><sz val=\"11\"/><name val=\"Calibri\"/></font><font><b/><sz val=\"11\"/><name val=\"Calibri\"/></font></fonts><fills count=\"2\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFD9EAF7\"/><bgColor indexed=\"64\"/></patternFill></fill></fills><borders count=\"1\"><border/></borders><cellStyleXfs count=\"1\"><xf/></cellStyleXfs><cellXfs count=\"3\"><xf fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/><xf fontId=\"1\" fillId=\"1\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf></cellXfs></styleSheet>");StringBuilder s=new StringBuilder("<?xml version=\"1.0\"?><worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><cols><col min=\"1\" max=\"1\" width=\"22\" customWidth=\"1\"/><col min=\"2\" max=\"2\" width=\"55\" customWidth=\"1\"/><col min=\"3\" max=\"3\" width=\"22\" customWidth=\"1\"/><col min=\"4\" max=\"4\" width=\"24\" customWidth=\"1\"/></cols><sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/></sheetView></sheetViews><sheetData>");for(int r=0;r<rows.size();r++){s.append("<row r=\"").append(r+1).append("\">");for(int c=0;c<rows.get(r).length;c++){String ref=letters(c+1)+(r+1);int style=r==0?1:2;s.append("<c r=\"").append(ref).append("\" t=\"inlineStr\" s=\"").append(style).append("\"><is><t>").append(xml(rows.get(r)[c])).append("</t></is></c>");}s.append("</row>");}s.append("</sheetData><autoFilter ref=\"A1:D").append(rows.size()).append("\"/><pageSetup orientation=\"landscape\" fitToWidth=\"1\" fitToHeight=\"0\"/></worksheet>");put(z,"xl/worksheets/sheet1.xml",s.toString());z.finish();z.close();}
         static void put(ZipOutputStream z,String n,String s)throws Exception{z.putNextEntry(new ZipEntry(n));z.write(s.getBytes("UTF-8"));z.closeEntry();}
