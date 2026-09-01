@@ -128,6 +128,10 @@ public class MainActivity extends Activity {
                 else if (r == LOC) importLocations(u);
                 else if (r == NEG) importNegatives(u);
                 else if (r == EXPORT) exportXlsx(u, prefs.getString("export_scope", "FALTANDO"));
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                toast("Arquivo muito grande para a memória do aparelho. Tente novamente após fechar outros aplicativos.", false);
+                playError();
             } catch (Exception e) {
                 toast("Erro: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()), false);
                 playError();
@@ -516,11 +520,127 @@ public class MainActivity extends Activity {
     }
 
     static class Xlsx {
-        static List<List<String>> read(InputStream in)throws Exception{
-            Map<String,byte[]> z=new HashMap<>();ZipInputStream zi=new ZipInputStream(in);ZipEntry e;while((e=zi.getNextEntry())!=null){ByteArrayOutputStream b=new ByteArrayOutputStream();byte[]buf=new byte[8192];int n;while((n=zi.read(buf))>0)b.write(buf,0,n);z.put(e.getName(),b.toByteArray());}
-            List<String> shared=new ArrayList<>();byte[]ss=z.get("xl/sharedStrings.xml");if(ss!=null){Document d=parse(ss);NodeList sis=d.getElementsByTagName("si");for(int i=0;i<sis.getLength();i++){Element si=(Element)sis.item(i);NodeList ts=si.getElementsByTagName("t");StringBuilder x=new StringBuilder();for(int j=0;j<ts.getLength();j++)x.append(ts.item(j).getTextContent());shared.add(x.toString());}}
-            String sheetPath="xl/worksheets/sheet1.xml";byte[]sh=z.get(sheetPath);if(sh==null)throw new Exception("Planilha sem primeira aba");Document d=parse(sh);NodeList rs=d.getElementsByTagName("row");List<List<String>> out=new ArrayList<>();for(int i=0;i<rs.getLength();i++){Element row=(Element)rs.item(i);NodeList cs=row.getElementsByTagName("c");List<String> vals=new ArrayList<>();for(int j=0;j<cs.getLength();j++){Element c=(Element)cs.item(j);int idx=colIndex(c.getAttribute("r"));while(vals.size()<=idx)vals.add("");String t=c.getAttribute("t"),v="";NodeList vs=c.getElementsByTagName("v");if(vs.getLength()>0)v=vs.item(0).getTextContent();else{NodeList is=c.getElementsByTagName("t");if(is.getLength()>0)v=is.item(0).getTextContent();}if(t.equals("s")&&!v.isEmpty()){int x=Integer.parseInt(v);v=x<shared.size()?shared.get(x):v;}vals.set(idx,v);}out.add(vals);}return out;
+        static List<List<String>> read(InputStream in) throws Exception {
+            // Leitor XLSX otimizado para Android.
+            // Não cria DOM da planilha inteira: sharedStrings e sheet são processados com SAX.
+            byte[] sharedBytes = null;
+            byte[] sheetBytes = null;
+
+            try (ZipInputStream zi = new ZipInputStream(in)) {
+                ZipEntry e;
+                byte[] buf = new byte[32768];
+                while ((e = zi.getNextEntry()) != null) {
+                    String name = e.getName();
+                    if (!"xl/sharedStrings.xml".equals(name) &&
+                        !"xl/worksheets/sheet1.xml".equals(name)) {
+                        continue;
+                    }
+                    ByteArrayOutputStream b = new ByteArrayOutputStream();
+                    int n;
+                    while ((n = zi.read(buf)) > 0) b.write(buf, 0, n);
+                    if ("xl/sharedStrings.xml".equals(name)) sharedBytes = b.toByteArray();
+                    else sheetBytes = b.toByteArray();
+                }
+            }
+
+            if (sheetBytes == null) throw new Exception("Planilha sem primeira aba");
+
+            final List<String> shared = new ArrayList<>();
+            if (sharedBytes != null) {
+                javax.xml.parsers.SAXParserFactory sf = javax.xml.parsers.SAXParserFactory.newInstance();
+                sf.setNamespaceAware(false);
+                javax.xml.parsers.SAXParser sp = sf.newSAXParser();
+
+                sp.parse(new ByteArrayInputStream(sharedBytes), new org.xml.sax.helpers.DefaultHandler() {
+                    boolean inSi = false;
+                    boolean inT = false;
+                    StringBuilder current = null;
+
+                    @Override public void startElement(String uri, String local, String qName, org.xml.sax.Attributes a) {
+                        if ("si".equals(qName)) {
+                            inSi = true;
+                            current = new StringBuilder();
+                        } else if (inSi && "t".equals(qName)) {
+                            inT = true;
+                        }
+                    }
+
+                    @Override public void characters(char[] ch, int start, int length) {
+                        if (inSi && inT && current != null) current.append(ch, start, length);
+                    }
+
+                    @Override public void endElement(String uri, String local, String qName) {
+                        if ("t".equals(qName)) {
+                            inT = false;
+                        } else if ("si".equals(qName)) {
+                            shared.add(current == null ? "" : current.toString());
+                            current = null;
+                            inSi = false;
+                        }
+                    }
+                });
+            }
+
+            final List<List<String>> out = new ArrayList<>();
+            javax.xml.parsers.SAXParserFactory sf = javax.xml.parsers.SAXParserFactory.newInstance();
+            sf.setNamespaceAware(false);
+            javax.xml.parsers.SAXParser sp = sf.newSAXParser();
+
+            sp.parse(new ByteArrayInputStream(sheetBytes), new org.xml.sax.helpers.DefaultHandler() {
+                List<String> row = null;
+                int col = 0;
+                String cellType = "";
+                boolean inValue = false;
+                boolean inInlineText = false;
+                StringBuilder value = new StringBuilder();
+
+                @Override public void startElement(String uri, String local, String qName, org.xml.sax.Attributes a) {
+                    if ("row".equals(qName)) {
+                        row = new ArrayList<>();
+                    } else if ("c".equals(qName)) {
+                        col = colIndex(a.getValue("r"));
+                        cellType = a.getValue("t");
+                        if (cellType == null) cellType = "";
+                        value.setLength(0);
+                    } else if ("v".equals(qName)) {
+                        inValue = true;
+                        value.setLength(0);
+                    } else if ("t".equals(qName) && ("inlineStr".equals(cellType) || "str".equals(cellType))) {
+                        inInlineText = true;
+                        value.setLength(0);
+                    }
+                }
+
+                @Override public void characters(char[] ch, int start, int length) {
+                    if (inValue || inInlineText) value.append(ch, start, length);
+                }
+
+                @Override public void endElement(String uri, String local, String qName) {
+                    if ("v".equals(qName)) {
+                        inValue = false;
+                    } else if ("t".equals(qName)) {
+                        inInlineText = false;
+                    } else if ("c".equals(qName)) {
+                        if (row == null) return;
+                        while (row.size() <= col) row.add("");
+                        String v = value.toString();
+                        if ("s".equals(cellType) && !v.isEmpty()) {
+                            try {
+                                int x = Integer.parseInt(v.trim());
+                                if (x >= 0 && x < shared.size()) v = shared.get(x);
+                            } catch (Exception ignored) {}
+                        }
+                        row.set(col, v);
+                    } else if ("row".equals(qName)) {
+                        if (row != null) out.add(row);
+                        row = null;
+                    }
+                }
+            });
+
+            return out;
         }
+
         static Document parse(byte[] b) throws Exception {
             DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
             f.setNamespaceAware(false);
