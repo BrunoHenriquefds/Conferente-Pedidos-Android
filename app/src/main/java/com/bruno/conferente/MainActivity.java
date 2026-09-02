@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
     ToneGenerator tone;
     SharedPreferences prefs;
 
-    static final int REPORT = 10, LOC = 11, NEG = 12, EXPORT = 13;
+    static final int REPORT = 10, LOC = 11, NEG = 12, EXPORT = 13, WITHDRAWAL = 14;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -125,6 +125,7 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             try {
                 if (r == REPORT) importReport(u);
+                else if (r == WITHDRAWAL) importWithdrawal(u);
                 else if (r == LOC) importLocations(u);
                 else if (r == NEG) importNegatives(u);
                 else if (r == EXPORT) exportXlsx(u, prefs.getString("export_scope", "FALTANDO"));
@@ -268,6 +269,77 @@ public class MainActivity extends Activity {
         }
         if (out.isEmpty()) throw new Exception("Não encontrei ID do pedido, SKU e quantidade no PDF da Amazon");
         return out;
+    }
+
+
+    void importWithdrawal(Uri u) throws Exception {
+        String fileName = displayName(u);
+        List<List<String>> rows;
+        try (InputStream in = getContentResolver().openInputStream(u)) { rows = Xlsx.read(in); }
+
+        int h = findHeader(rows, new String[]{"isbn", "descricao", "descrição", "quantidade", "localizacao ss", "localização ss"});
+        if (h < 0) throw new Exception("Formato não reconhecido. Use: ISBN, DESCRIÇÃO, QUANTIDADE e LOCALIZAÇÃO SS");
+
+        Header c = new Header(rows.get(h));
+        if (!c.has("isbn", "ean", "codigo de barras", "código de barras", "sku"))
+            throw new Exception("Coluna ISBN não encontrada");
+        if (!c.has("descricao", "descrição", "titulo", "título"))
+            throw new Exception("Coluna DESCRIÇÃO não encontrada");
+        if (!c.has("quantidade", "qtd", "qtde"))
+            throw new Exception("Coluna QUANTIDADE não encontrada");
+
+        // Agrupa ISBN repetido somando as quantidades.
+        LinkedHashMap<String, ItemIn> grouped = new LinkedHashMap<>();
+
+        for (int i = h + 1; i < rows.size(); i++) {
+            List<String> r = rows.get(i);
+            String code = cleanCode(c.val(r, "isbn", "ean", "codigo de barras", "código de barras", "sku", "codigo", "código"));
+            if (code.isEmpty()) continue;
+
+            int qty = parseInt(c.val(r, "quantidade", "qtd", "qtde"), 0);
+            if (qty <= 0) continue;
+
+            String desc = c.val(r, "descricao", "descrição", "titulo", "título");
+            String loc = c.val(r, "localizacao ss", "localização ss", "localizacao simpleset", "localização simpleset");
+
+            ItemIn x = grouped.get(code);
+            if (x == null) {
+                x = new ItemIn();
+                x.code = code;
+                x.desc = desc;
+                x.qty = qty;
+                x.location = loc;
+                x.platform = "Retirada / Devolução";
+                x.source = "RETIRADA";
+                x.order = "";
+                grouped.put(code, x);
+            } else {
+                x.qty += qty;
+                if ((x.desc == null || x.desc.isEmpty()) && desc != null) x.desc = desc;
+                if ((x.location == null || x.location.isEmpty()) && loc != null) x.location = loc;
+            }
+        }
+
+        if (grouped.isEmpty()) throw new Exception("Nenhum produto válido encontrado");
+
+        String base = fileName.replaceFirst("(?i)\\.(xlsx|xls)$", "");
+        if (base.length() > 24) base = base.substring(0, 24);
+        String name = "DEV - " + base + " - " + new SimpleDateFormat("dd/MM HH:mm", Locale.getDefault()).format(new Date());
+
+        batchId = db.newBatch(name, "RETIRADA:" + fileName);
+        for (ItemIn x : grouped.values()) db.addWithdrawalItem(batchId, x);
+
+        db.applyCatalog(batchId);
+        mode = "items";
+        completionShown = false;
+        packageCompletionShown = false;
+
+        js("setBatch('" + esc(name) + "')");
+        js("setModeUI && setModeUI('items')");
+        requestData();
+
+        toast(grouped.size() + " produto(s) importado(s) para retirada", true);
+        playOk();
     }
 
     void importLocations(Uri u) throws Exception {
@@ -425,6 +497,7 @@ public class MainActivity extends Activity {
     static String readAll(InputStream in) throws Exception { ByteArrayOutputStream b=new ByteArrayOutputStream(); byte[]x=new byte[8192]; int n; while((n=in.read(x))>0)b.write(x,0,n); return b.toString("UTF-8"); }
 
     public class Bridge {
+        @JavascriptInterface public void importWithdrawal() { picker(WITHDRAWAL, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void importReport() { picker(REPORT, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/pdf"); }
         @JavascriptInterface public void importLocations() { picker(LOC, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void importNegatives() { if (batchId==0){toast("Selecione uma lista primeiro",false);return;} picker(NEG, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
@@ -456,7 +529,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void coverSearch() { if(selectedId==0){toast("Selecione um item primeiro",false);return;} toast("Buscando uma nova capa...",true);loadCoverAsync(selectedId,true); }
         @JavascriptInterface public void soundSettings() { runOnUiThread(() -> { LinearLayout l=new LinearLayout(MainActivity.this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(48,20,48,8);CheckBox ok=new CheckBox(MainActivity.this);ok.setText("Som de conferência correta");ok.setChecked(prefs.getBoolean("sound_ok",true));CheckBox er=new CheckBox(MainActivity.this);er.setText("Som de erro");er.setChecked(prefs.getBoolean("sound_error",true));l.addView(ok);l.addView(er);new AlertDialog.Builder(MainActivity.this).setTitle("Configurações de som").setView(l).setPositiveButton("Salvar",(d,w)->prefs.edit().putBoolean("sound_ok",ok.isChecked()).putBoolean("sound_error",er.isChecked()).apply()).setNegativeButton("Cancelar",null).show(); }); }
         @JavascriptInterface public void printMissing() { MainActivity.this.printMissing(); }
-        @JavascriptInterface public void about() { runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this).setTitle("Conferente Pedidos Online").setMessage("Versão V31.3 Android Nativo\n\nItens, pacotes, Mercado Livre, Amazon PDF, SimpleSet, negativos, histórico, exportação, impressão e capas.").setPositiveButton("OK",null).show()); }
+        @JavascriptInterface public void about() { runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this).setTitle("Conferente Pedidos Online").setMessage("Versão V31.3.5 Android Nativo\n\nItens, pacotes, Mercado Livre, Amazon PDF, SimpleSet, negativos, histórico, exportação, impressão e capas.").setPositiveButton("OK",null).show()); }
     }
 
     static class ItemIn { String order="",buyer="",doc="",platform="",code="",desc="",tracking="",location="",nerus="",source=""; int qty=1; double price=0; }
@@ -495,6 +568,29 @@ public class MainActivity extends Activity {
         void deleteBatch(int id){SQLiteDatabase d=getWritableDatabase();d.beginTransaction();try{d.delete("history","batch_id=?",new String[]{""+id});d.delete("packages","batch_id=?",new String[]{""+id});d.delete("items","batch_id=?",new String[]{""+id});d.delete("batches","id=?",new String[]{""+id});d.setTransactionSuccessful();}finally{d.endTransaction();}}
 
         int addItemWithReuse(int b,ItemIn x){SQLiteDatabase d=getWritableDatabase();int inherited=0;int prev=0;if(!x.order.trim().isEmpty()){Cursor c=d.rawQuery("SELECT COALESCE(MAX(checked),0) FROM items WHERE batch_id<>? AND TRIM(order_id)=TRIM(?) AND (code=? OR sku=?)",new String[]{""+b,x.order,x.code,x.code});if(c.moveToFirst())prev=c.getInt(0);c.close();}int checked=Math.min(Math.max(prev,0),Math.max(x.qty,1));inherited=checked;ContentValues v=new ContentValues();v.put("batch_id",b);v.put("order_id",x.order);v.put("buyer",x.buyer);v.put("doc",x.doc);v.put("platform",x.platform);v.put("code",x.code);v.put("sku",x.code);v.put("description",x.desc);v.put("qty",Math.max(x.qty,1));v.put("checked",checked);v.put("unit_price",x.price);v.put("location",x.location);v.put("nerus",x.nerus);v.put("tracking",x.tracking);v.put("source",x.source);v.put("status",checked>=x.qty?"CONFERIDO":checked>0?"PARCIAL":"PENDENTE");d.insert("items",null,v);String k=trackKey(x.tracking);if(!k.isEmpty()){ContentValues p=new ContentValues();p.put("batch_id",b);p.put("order_id",x.order);p.put("tracking",x.tracking);p.put("key",k);d.insertWithOnConflict("packages",null,p,SQLiteDatabase.CONFLICT_IGNORE);}return inherited;}
+
+        void addWithdrawalItem(int b, ItemIn x){
+            SQLiteDatabase d = getWritableDatabase();
+            ContentValues v = new ContentValues();
+            v.put("batch_id", b);
+            v.put("order_id", "");
+            v.put("buyer", "");
+            v.put("doc", "");
+            v.put("platform", "Retirada / Devolução");
+            v.put("code", cleanCode(x.code));
+            v.put("sku", cleanCode(x.code));
+            v.put("description", x.desc == null ? "" : x.desc);
+            v.put("qty", Math.max(x.qty, 1));
+            v.put("checked", 0);
+            v.put("unit_price", 0);
+            v.put("location", x.location == null ? "" : x.location);
+            v.put("nerus", "");
+            v.put("tracking", "");
+            v.put("source", "RETIRADA");
+            v.put("status", "PENDENTE");
+            d.insert("items", null, v);
+        }
+
         static String trackKey(String s){if(s==null)return"";Matcher m=Pattern.compile("(\\d{8,})").matcher(s.replaceAll("\\s","").toUpperCase(Locale.ROOT));return m.find()?m.group(1):"";}
 
         boolean putLocation(String code,String loc){SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT location FROM locations WHERE code=?",new String[]{code});String old="";if(c.moveToFirst())old=c.getString(0);c.close();ContentValues v=new ContentValues();v.put("code",code);v.put("location",loc);v.put("updated",new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.ROOT).format(new Date()));d.insertWithOnConflict("locations",null,v,SQLiteDatabase.CONFLICT_REPLACE);return!loc.equals(old);}
@@ -503,7 +599,7 @@ public class MainActivity extends Activity {
 
         int[] applyNegatives(int b,List<NegIn> rows){SQLiteDatabase d=getWritableDatabase();d.execSQL("UPDATE items SET negative=0,negative_product='',negative_grade='',negative_last_purchase='',negative_profit_center='' WHERE batch_id=?",new Object[]{b});int matched=0,unmatched=0;for(NegIn n:rows){ContentValues v=new ContentValues();v.put("negative",n.qty);v.put("negative_product",n.product);v.put("negative_grade",n.grade);v.put("negative_last_purchase",n.lastPurchase);v.put("negative_profit_center",n.profitCenter);int x=d.update("items",v,"batch_id=? AND (code=? OR sku=?)",new String[]{""+b,n.code,n.code});if(x>0)matched+=x;else unmatched++;}return new int[]{matched,unmatched};}
 
-        Map<String,String> scanItem(int b,String raw){String code=cleanCode(raw);Map<String,String>r=new HashMap<>();SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT id,qty,checked,description FROM items WHERE batch_id=? AND (code=? OR sku=?) AND checked<qty ORDER BY id LIMIT 1",new String[]{""+b,code,code});if(c.moveToFirst()){int id=c.getInt(0),q=c.getInt(1),ch=c.getInt(2)+1;String desc=c.getString(3);d.execSQL("UPDATE items SET checked=?,status=? WHERE id=?",new Object[]{ch,ch>=q?"CONFERIDO":"PARCIAL",id});d.execSQL("INSERT INTO history(batch_id,item_id,kind) VALUES(?,?,'item')",new Object[]{b,id});r.put("ok","true");r.put("itemId",""+id);r.put("message",ch>=q?"Conferido: "+desc:"Bip "+ch+"/"+q+" • "+desc);}else{Cursor x=d.rawQuery("SELECT id FROM items WHERE batch_id=? AND (code=? OR sku=?)",new String[]{""+b,code,code});boolean exists=x.moveToFirst();x.close();r.put("ok","false");r.put("message",exists?"Quantidade já conferida":"Código não encontrado");}c.close();return r;}
+        Map<String,String> scanItem(int b,String raw){String code=cleanCode(raw);Map<String,String>r=new HashMap<>();SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT id,qty,checked,description FROM items WHERE batch_id=? AND (code=? OR sku=?) AND checked<qty ORDER BY id LIMIT 1",new String[]{""+b,code,code});if(c.moveToFirst()){int id=c.getInt(0),q=c.getInt(1),ch=c.getInt(2)+1;String desc=c.getString(3);d.execSQL("UPDATE items SET checked=?,status=? WHERE id=?",new Object[]{ch,ch>=q?"CONFERIDO":"PARCIAL",id});d.execSQL("INSERT INTO history(batch_id,item_id,kind) VALUES(?,?,'item')",new Object[]{b,id});r.put("ok","true");r.put("itemId",""+id);r.put("message",ch>=q?"Conferido: "+desc:"Bip "+ch+"/"+q+" • "+desc);}else{Cursor x=d.rawQuery("SELECT id FROM items WHERE batch_id=? AND (code=? OR sku=?)",new String[]{""+b,code,code});boolean exists=x.moveToFirst();x.close();r.put("ok","false");r.put("message",exists?"Quantidade já atingida para este produto":"Produto não localizado na lista");}c.close();return r;}
         Map<String,String> scanPackage(int b,String raw){Map<String,String>r=new HashMap<>();String k=trackKey(raw);if(k.isEmpty()){r.put("ok","false");r.put("message","Rastreio inválido");return r;}SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT id,checked,order_id FROM packages WHERE batch_id=? AND key=?",new String[]{""+b,k});if(!c.moveToFirst()){r.put("ok","false");r.put("message","Pacote não encontrado");}else if(c.getInt(1)>0){r.put("ok","false");r.put("message","Pacote já conferido");}else{int id=c.getInt(0);String order=c.getString(2);d.execSQL("UPDATE packages SET checked=1,checked_at=CURRENT_TIMESTAMP WHERE id=?",new Object[]{id});d.execSQL("INSERT INTO history(batch_id,item_id,kind) VALUES(?,?,'package')",new Object[]{b,id});r.put("ok","true");r.put("message","Pacote conferido • "+(order==null?"":order));}c.close();return r;}
         boolean undoLast(int b,String mode){SQLiteDatabase d=getWritableDatabase();String kind=mode.equals("packages")?"package":"item";Cursor c=d.rawQuery("SELECT id,item_id FROM history WHERE batch_id=? AND kind=? ORDER BY id DESC LIMIT 1",new String[]{""+b,kind});if(!c.moveToFirst()){c.close();return false;}int hid=c.getInt(0),id=c.getInt(1);if(kind.equals("item")){Cursor x=d.rawQuery("SELECT checked,qty FROM items WHERE id=?",new String[]{""+id});if(x.moveToFirst()){int ch=Math.max(0,x.getInt(0)-1),q=x.getInt(1);d.execSQL("UPDATE items SET checked=?,status=? WHERE id=?",new Object[]{ch,ch==0?"PENDENTE":ch>=q?"CONFERIDO":"PARCIAL",id});}x.close();}else d.execSQL("UPDATE packages SET checked=0,checked_at=NULL WHERE id=?",new Object[]{id});d.delete("history","id=?",new String[]{""+hid});c.close();return true;}
 
@@ -675,65 +771,6 @@ public class MainActivity extends Activity {
         static void put(ZipOutputStream z,String n,String s)throws Exception{z.putNextEntry(new ZipEntry(n));z.write(s.getBytes("UTF-8"));z.closeEntry();}
         static String xml(String s){return(s==null?"":s).replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");}
         static String letters(int n){String s="";while(n>0){n--;s=(char)('A'+n%26)+s;n/=26;}return s;}
-        void insertWithdrawalItem(long batchId,String code,String desc,int expected,String loc){
-            SQLiteDatabase d=getWritableDatabase();
-            ContentValues v=new ContentValues();
-            v.put("batch_id",batchId);
-            v.put("code",normalizeDbCode(code));
-            v.put("description",desc);
-            v.put("expected",expected);
-            v.put("checked",0);
-            v.put("location_ss",loc);
-            v.put("status","PENDENTE");
-            d.insert("withdrawal_items",null,v);
-        }
-
-        String getBatchType(long batchId){
-            try(Cursor c=getReadableDatabase().rawQuery("SELECT COALESCE(type,'PEDIDOS') FROM batches WHERE id=?",new String[]{String.valueOf(batchId)})){
-                if(c.moveToFirst()) return c.getString(0);
-            }catch(Exception ignored){}
-            return "PEDIDOS";
-        }
-
-        static String normalizeDbCode(String s){
-            if(s==null)return "";
-            s=s.trim();
-            if(s.endsWith(".0")) s=s.substring(0,s.length()-2);
-            return s.replaceAll("\\s+","");
-        }
-
-        static class WithdrawalScanResult{
-            static final int OK=1, NOT_FOUND=2, LIMIT_REACHED=3;
-            int status,checked,expected;
-            WithdrawalScanResult(int s,int c,int e){status=s;checked=c;expected=e;}
-        }
-
-        WithdrawalScanResult scanWithdrawal(long batchId,String rawCode){
-            String code=normalizeDbCode(rawCode);
-            SQLiteDatabase d=getWritableDatabase();
-            d.beginTransaction();
-            try(Cursor c=d.rawQuery("SELECT id,expected,checked FROM withdrawal_items WHERE batch_id=? AND code=? LIMIT 1",
-                    new String[]{String.valueOf(batchId),code})){
-                if(!c.moveToFirst()){
-                    d.setTransactionSuccessful();
-                    return new WithdrawalScanResult(WithdrawalScanResult.NOT_FOUND,0,0);
-                }
-                long id=c.getLong(0);
-                int exp=c.getInt(1), chk=c.getInt(2);
-                if(chk>=exp){
-                    d.setTransactionSuccessful();
-                    return new WithdrawalScanResult(WithdrawalScanResult.LIMIT_REACHED,chk,exp);
-                }
-                chk++;
-                ContentValues v=new ContentValues();
-                v.put("checked",chk);
-                v.put("status",chk>=exp?"CONFERIDO":"PARCIAL");
-                d.update("withdrawal_items",v,"id=?",new String[]{String.valueOf(id)});
-                d.setTransactionSuccessful();
-                return new WithdrawalScanResult(WithdrawalScanResult.OK,chk,exp);
-            }finally{ d.endTransaction(); }
-        }
-
 
     }
 }
