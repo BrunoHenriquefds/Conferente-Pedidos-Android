@@ -258,7 +258,7 @@ body{font-size:11px}
 
 /* letras maiores na lista */
 .head,.row{
-  grid-template-columns:118px minmax(200px,1fr) 42px 48px 58px 82px 74px;
+  grid-template-columns:112px minmax(185px,1fr) 38px 43px 52px 76px 132px;
   padding:0 8px;
   column-gap:5px;
 }
@@ -404,15 +404,35 @@ body{font-size:11px}
   .app{grid-template-columns:minmax(0,1fr) 17.5% !important}
   .topbar{grid-template-columns:minmax(0,1fr) 75px 105px 138px}
   .head,.row{
-    grid-template-columns:105px minmax(160px,1fr) 38px 43px 52px 74px 67px;
+    grid-template-columns:98px minmax(145px,1fr) 34px 39px 47px 68px 118px;
   }
   .row{font-size:9.8px}
 }
 
+
+/* V31.3.7 - Última Entrada + ordenação por coluna + modo foco */
+.lastico{stroke:#ffb020!important}
+.head>div{cursor:pointer;user-select:none}
+.head>div:hover{background:#10273a}
+.lastEntryCell{font-size:8.7px;line-height:1.15;white-space:normal;color:#d9e7f4}
+.lastEntryCell b{display:block;color:#f2f7fb;font-size:9.2px}
+.focusExit{
+  display:none;position:fixed;z-index:72;left:43px;top:calc(env(safe-area-inset-top,0px) + 7px);
+  width:30px;height:30px;border:1px solid #30485e;border-radius:5px;
+  background:#0b1926;color:#eef6ff;font-size:15px;line-height:26px;padding:0
+}
+.app.focusMode .focusExit{display:block}
+.app.focusMode .topbar,
+.app.focusMode .summaryFooter{display:none!important}
+.app.focusMode .main{padding-top:5px!important}
+.app.focusMode .tablebox{margin-top:0}
+.app.focusMode .scanrow{margin-top:0}
+.app.focusMode .rows{height:calc(100% - 67px)}
+
 </style>
 </head>
 <body>
-<div class="app" id="appRoot"><button class="drawerToggle" onclick="toggleMenu()" aria-label="Abrir menu">☰</button><div class="drawerShade" onclick="closeMenu()"></div>
+<div class="app" id="appRoot"><button class="focusExit" onclick="exitFocusMode(event)" aria-label="Sair do modo foco">↕</button><button class="drawerToggle" onclick="toggleMenu()" aria-label="Abrir menu">☰</button><div class="drawerShade" onclick="closeMenu()"></div>
 <aside class="side">
   <div class="brand">
     <div class="brandIcon">
@@ -428,6 +448,7 @@ body{font-size:11px}
   <div class="nav" onclick="closeMenu();Android.importWithdrawal()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M4 7h16M7 7V4h10v3M6 7l1 14h10l1-14M9 11h6M9 15h6"/></svg><span class="txt">Importar retirada / devolução</span></div>
   <div class="nav" onclick="Android.importReport()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 11h6M9 15h6"/></svg><span class="txt">Importar relatório</span></div>
   <div class="nav" onclick="Android.importLocations()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M12 22s7-6.1 7-13a7 7 0 1 0-14 0c0 6.9 7 13 7 13z"/><circle cx="12" cy="9" r="2.4"/></svg><span class="txt">Importar localizações (SS)</span></div>
+  <div class="nav" onclick="closeMenu();Android.importLastEntries()"><svg class="navsvg lastico" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 9h16M8 13h3M8 16h6"/></svg><span class="txt">Importar Última Entrada (111)</span></div>
   <div class="nav" onclick="Android.importNegatives()"><svg class="navsvg redico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg><span class="txt">Importar negativos</span></div>
   <div class="nav" onclick="Android.refreshLocations()"><svg class="navsvg" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.2 8.2A7 7 0 0 1 18.3 7M17.8 15.8A7 7 0 0 1 5.7 17"/></svg><span class="txt">Atualizar localizações</span></div>
   <div class="sep"></div>
@@ -444,13 +465,13 @@ body{font-size:11px}
 
   <div class="foot">
     <div class="themeRow"><span>Tema escuro</span><span class="switch"></span></div>
-    <div>Versão: <span style="color:#2d8df4">V31.3.0</span></div>
+    <div>Versão: <span style="color:#2d8df4">V31.3.7</span></div>
   </div>
 </aside>
 
 <main class="main">
   <div class="topbar">
-    <div class="appTitle">Conferente de Pedidos <small>V31.3.6</small></div>
+    <div class="appTitle">Conferente de Pedidos <small>V31.3.7</small></div>
     <select id="topFilter" class="topFilter" onchange="syncTopFilter()">
       <option value="all">Filtros: Todos</option>
       <option value="pending">Pendentes</option>
@@ -462,7 +483,7 @@ body{font-size:11px}
     <select id="topSort" class="topSort" onchange="syncTopSort()">
       <option value="code">Ordenar: Código</option>
       <option value="desc">Ordenar: Descrição</option>
-      <option value="loc">Ordenar: Localização</option>
+      <option value="loc">Ordenar: Localização</option><option value="last">Ordenar: Última Entrada</option>
     </select>
     <div class="modeWrap">
       <div class="modeLabel">MODO</div>
@@ -498,13 +519,18 @@ body{font-size:11px}
       </select>
       <select id="sort" onchange="render()">
         <option value="code">Ordenar: Código</option><option value="desc">Ordenar: Descrição</option>
-        <option value="loc">Ordenar: Localização</option>
+        <option value="loc">Ordenar: Localização</option><option value="last">Ordenar: Última Entrada</option>
       </select>
       <div class="listIcon">☷</div>
     </div>
     <div class="head">
-      <div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div>
-      <div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div>
+      <div onclick="sortColumn('code')">CÓDIGO / ISBN</div>
+      <div onclick="sortColumn('desc')">DESCRIÇÃO DO PRODUTO</div>
+      <div onclick="sortColumn('qty')">QTD.</div>
+      <div onclick="sortColumn('checked')">CONF.</div>
+      <div onclick="sortColumn('missing')">FALTANDO</div>
+      <div onclick="sortColumn('loc')">LOCALIZAÇÃO SS</div>
+      <div onclick="sortColumn('last')">ÚLTIMA ENTRADA</div>
     </div>
     <div id="rows" class="rows"><div class="empty">Nenhuma lista selecionada</div></div>
   </div>
@@ -557,8 +583,18 @@ body{font-size:11px}
 </div>
 <div id="toast" class="toast"></div>
 <script>
-let data=[], selected=null, mode='items', recent=[];function toggleMenu(){document.getElementById('appRoot').classList.toggle('drawerOpen');}
+let data=[], selected=null, mode='items', recent=[], sortKey='code', sortDir=1;function toggleMenu(){document.getElementById('appRoot').classList.toggle('drawerOpen');}
 function closeMenu(){document.getElementById('appRoot').classList.remove('drawerOpen');}
+function enterFocusMode(){document.getElementById('appRoot').classList.add('focusMode');}
+function exitFocusMode(e){if(e)e.stopPropagation();document.getElementById('appRoot').classList.remove('focusMode');}
+function sortColumn(k){
+  if(sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=1;}
+  if(['code','desc','loc','last'].includes(k)){
+    sort.value=k; if(document.getElementById('topSort'))topSort.value=k;
+  }
+  render();
+}
+
 function openCoverModal(){
   const c=document.getElementById('cover');
   if(!c || !c.src){showToast('Nenhuma capa disponível',false);return;}
@@ -599,9 +635,32 @@ function scanResult(j){
 }
 function toastMsg(t,ok=true){toast.textContent=t;toast.style.display='block';toast.style.borderColor=ok?'#2e8b57':'#b33';setTimeout(()=>toast.style.display='none',2200)}
 function syncTopFilter(){filter.value=topFilter.value;render();}
-function syncTopSort(){sort.value=topSort.value;render();}
-function render(){let q=search.value.toLowerCase(),f=filter.value,s=sort.value;let a=data.filter(x=>(!q||(x.code+' '+x.description+' '+x.buyer).toLowerCase().includes(q))&&(f==='all'||(f==='checked'&&x.missing===0)||(f==='pending'&&x.checked===0&&x.missing>0)||(f==='partial'&&x.checked>0&&x.missing>0)||(f==='missing'&&x.missing>0)||(f==='negative'&&Number(x.negative)<0)));a.sort((x,y)=>String(s==='desc'?x.description:s==='loc'?x.location:x.code).localeCompare(String(s==='desc'?y.description:s==='loc'?y.location:y.code)));rows.innerHTML=a.length?a.map((x,i)=>`<div class="row ${selected&&selected.id===x.id?'sel':''}" onclick="selectItem(${x.id})"><div>${x.code}</div><div class="desc">${x.description}<small>${x.buyer||''}</small></div><div>${x.qty}</div><div class="green">${x.checked}</div><div class="${x.missing?'red':'green'}">${x.missing}</div><div>${x.location||''}</div><div class="status ${x.missing?'yellow':'green'}">${x.missing?'PENDENTE':'CONFERIDO'}</div></div>`).join(''):'<div class="empty">Nenhum item encontrado</div>';}
-function selectItem(id){selected=data.find(x=>x.id===id);render();if(!selected)return;dtitle.textContent=selected.description;dauthor.textContent=selected.author||'';details.innerHTML=[['Código / ISBN',selected.code],['Quantidade',selected.qty],['Conferido',selected.checked],['Faltando',selected.missing],['Situação',selected.status||(selected.missing?'PENDENTE':'CONFERIDO')],['Localização SS',selected.location||''],['Plataforma',selected.platform||''],['Comprador',selected.buyer||''],['CPF/CNPJ',selected.doc||''],['Pedido',selected.order||''],['Rastreio',selected.tracking||''],...(Number(selected.negative)<0?[['Estoque negativo',selected.negative],['Produto negativo',selected.negative_product||''],['Grade',selected.negative_grade||''],['Última compra',selected.negative_last_purchase||''],['Centro de lucro',selected.negative_profit_center||'']]:[])].map(a=>`<div class="dline"><span>${a[0]}:</span><span>${a[1]}</span></div>`).join('');cover.src='';Android.selectItem(id);}
+function syncTopSort(){sort.value=topSort.value;sortKey=topSort.value;sortDir=1;render();}
+function render(){
+  let q=search.value.toLowerCase(),f=filter.value;
+  let a=data.filter(x=>(!q||(x.code+' '+x.description+' '+x.buyer+' '+(x.last_entry_date||'')+' '+(x.last_entry_nf||'')).toLowerCase().includes(q))&&(f==='all'||(f==='checked'&&x.missing===0)||(f==='pending'&&x.checked===0&&x.missing>0)||(f==='partial'&&x.checked>0&&x.missing>0)||(f==='missing'&&x.missing>0)||(f==='negative'&&Number(x.negative)<0)));
+
+  const v=(x,k)=>{
+    if(k==='desc')return (x.description||'').toLowerCase();
+    if(k==='loc')return (x.location||'').toLowerCase();
+    if(k==='qty')return Number(x.qty)||0;
+    if(k==='checked')return Number(x.checked)||0;
+    if(k==='missing')return Number(x.missing)||0;
+    if(k==='last')return Number(x.last_entry_key)||0;
+    return String(x.code||'');
+  };
+  a.sort((x,y)=>{
+    let A=v(x,sortKey),B=v(y,sortKey);
+    if(typeof A==='number'&&typeof B==='number')return (A-B)*sortDir;
+    return String(A).localeCompare(String(B),undefined,{numeric:true})*sortDir;
+  });
+
+  rows.innerHTML=a.length?a.map((x,i)=>{
+    let le=x.last_entry_date?`<div class="lastEntryCell"><b>${x.last_entry_date}</b>NF ${x.last_entry_nf||'-'} • Qtd ${x.last_entry_qty||'-'}</div>`:'';
+    return `<div class="row ${selected&&selected.id===x.id?'sel':''}" onclick="enterFocusMode();selectItem(${x.id})"><div>${x.code}</div><div class="desc">${x.description}<small>${x.buyer||''}</small></div><div>${x.qty}</div><div class="green">${x.checked}</div><div class="${x.missing?'red':'green'}">${x.missing}</div><div>${x.location||''}</div><div>${le}</div></div>`;
+  }).join(''):'<div class="empty">Nenhum item encontrado</div>';
+}
+function selectItem(id){selected=data.find(x=>x.id===id);render();if(!selected)return;dtitle.textContent=selected.description;dauthor.textContent=selected.author||'';details.innerHTML=[['Código / ISBN',selected.code],['Quantidade',selected.qty],['Conferido',selected.checked],['Faltando',selected.missing],['Situação',selected.status||(selected.missing?'PENDENTE':'CONFERIDO')],['Localização SS',selected.location||''],['Última Entrada',selected.last_entry_date?`${selected.last_entry_date} • NF ${selected.last_entry_nf||'-'} • Qtd ${selected.last_entry_qty||'-'}`:''],['Plataforma',selected.platform||''],['Comprador',selected.buyer||''],['CPF/CNPJ',selected.doc||''],['Pedido',selected.order||''],['Rastreio',selected.tracking||''],...(Number(selected.negative)<0?[['Estoque negativo',selected.negative],['Produto negativo',selected.negative_product||''],['Grade',selected.negative_grade||''],['Última compra',selected.negative_last_purchase||''],['Centro de lucro',selected.negative_profit_center||'']]:[])].map(a=>`<div class="dline"><span>${a[0]}:</span><span>${a[1]}</span></div>`).join('');cover.src='';Android.selectItem(id);}
 function setCover(url){
       if(url){cover.style.display='block';cover.src=url;}
       else{cover.removeAttribute('src');cover.style.display='block';}

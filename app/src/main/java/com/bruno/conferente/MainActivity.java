@@ -39,7 +39,7 @@ public class MainActivity extends Activity {
     ToneGenerator tone;
     SharedPreferences prefs;
 
-    static final int REPORT = 10, LOC = 11, NEG = 12, EXPORT = 13, WITHDRAWAL = 14;
+    static final int REPORT = 10, LOC = 11, NEG = 12, EXPORT = 13, WITHDRAWAL = 14, LAST_ENTRY = 15;
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
@@ -128,6 +128,7 @@ public class MainActivity extends Activity {
                 else if (r == WITHDRAWAL) importWithdrawal(u);
                 else if (r == LOC) importLocations(u);
                 else if (r == NEG) importNegatives(u);
+                else if (r == LAST_ENTRY) importLastEntries(u);
                 else if (r == EXPORT) exportXlsx(u, prefs.getString("export_scope", "FALTANDO"));
             } catch (OutOfMemoryError e) {
                 System.gc();
@@ -168,6 +169,7 @@ public class MainActivity extends Activity {
         int inherited = 0;
         for (ItemIn x : items) inherited += db.addItemWithReuse(batchId, x);
         db.applyCatalog(batchId);
+        db.applyLastEntries(batchId);
         completionShown = false; packageCompletionShown = false;
         final int inheritedFinal = inherited;
         js("setBatch('" + esc(name) + "')");
@@ -330,6 +332,7 @@ public class MainActivity extends Activity {
         for (ItemIn x : grouped.values()) db.addWithdrawalItem(batchId, x);
 
         db.applyCatalog(batchId);
+        db.applyLastEntries(batchId);
         mode = "items";
         completionShown = false;
         packageCompletionShown = false;
@@ -340,6 +343,105 @@ public class MainActivity extends Activity {
 
         toast(grouped.size() + " produto(s) importado(s) para retirada", true);
         playOk();
+    }
+
+
+    static class LastEntryIn {
+        String code="", date="", nf="", qty="";
+        int key=0;
+    }
+
+    static int dateKey(String s) {
+        if (s == null) return 0;
+        s = s.trim();
+        String[] pats = {"dd/MM/yyyy","d/M/yyyy","yyyy-MM-dd","dd-MM-yyyy"};
+        for (String p : pats) {
+            try {
+                SimpleDateFormat f = new SimpleDateFormat(p, Locale.ROOT);
+                f.setLenient(false);
+                Date d = f.parse(s);
+                Calendar c = Calendar.getInstance();
+                c.setTime(d);
+                return c.get(Calendar.YEAR)*10000 + (c.get(Calendar.MONTH)+1)*100 + c.get(Calendar.DAY_OF_MONTH);
+            } catch (Exception ignored) {}
+        }
+        return 0;
+    }
+
+    static boolean usableEntryCode(String s) {
+        if (s == null) return false;
+        String x = cleanCode(s).trim();
+        if (x.isEmpty()) return false;
+        String n = norm(x).replace(" ", "");
+        return !(n.equals("semgtin") || n.equals("0") || n.equals("none") || n.equals("null"));
+    }
+
+    void importLastEntries(Uri u) throws Exception {
+        File tmp = File.createTempFile("ultima_entrada_", ".xlsx", getCacheDir());
+        try {
+            try (InputStream in = getContentResolver().openInputStream(u);
+                 OutputStream out = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[32768];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            }
+
+            final LinkedHashMap<String, LastEntryIn> latest = new LinkedHashMap<>();
+            final int[] cols = {-1,-1,-1,-1,-1,-1}; // date,nf,qty,cEAN,cEANTrib,cProd
+            final boolean[] headerFound = {false};
+
+            Xlsx.eachRow(tmp, row -> {
+                if (!headerFound[0]) {
+                    for (int c=0;c<row.size();c++) {
+                        String h = norm(row.get(c));
+                        if (h.equals("data entrada (planilha 111)") || h.equals("data entrada planilha 111")) cols[0]=c;
+                        else if (h.equals("nf") || h.equals("nota") || h.equals("nota fiscal")) cols[1]=c;
+                        else if (h.equals("quantidade") || h.equals("qtd") || h.equals("qtde")) cols[2]=c;
+                        else if (h.equals("cean")) cols[3]=c;
+                        else if (h.equals("ceantrib")) cols[4]=c;
+                        else if (h.equals("cprod")) cols[5]=c;
+                    }
+                    if (cols[0]>=0 && cols[1]>=0 && cols[2]>=0 && (cols[3]>=0 || cols[4]>=0 || cols[5]>=0)) {
+                        headerFound[0]=true;
+                    }
+                    return;
+                }
+
+                String date = val(row, cols[0]);
+                int key = dateKey(date);
+                if (key <= 0) return;
+
+                String nf = val(row, cols[1]);
+                String qty = val(row, cols[2]);
+                LinkedHashSet<String> codes = new LinkedHashSet<>();
+                if (cols[3]>=0 && usableEntryCode(val(row,cols[3]))) codes.add(cleanCode(val(row,cols[3])));
+                if (cols[4]>=0 && usableEntryCode(val(row,cols[4]))) codes.add(cleanCode(val(row,cols[4])));
+                if (cols[5]>=0 && usableEntryCode(val(row,cols[5]))) codes.add(cleanCode(val(row,cols[5])));
+
+                for (String code : codes) {
+                    LastEntryIn old = latest.get(code);
+                    if (old == null || key >= old.key) {
+                        LastEntryIn x = new LastEntryIn();
+                        x.code=code; x.date=date; x.nf=nf; x.qty=qty; x.key=key;
+                        latest.put(code, x);
+                    }
+                }
+            });
+
+            if (!headerFound[0]) {
+                throw new Exception("Não encontrei as colunas Data Entrada (Planilha 111), NF, Quantidade e código do produto");
+            }
+            if (latest.isEmpty()) throw new Exception("Nenhuma última entrada válida encontrada");
+
+            db.replaceLastEntries(latest.values());
+            db.applyLastEntriesAll();
+            requestData();
+
+            toast("Última Entrada atualizada • " + latest.size() + " código(s)", true);
+            playOk();
+        } finally {
+            try { tmp.delete(); } catch (Exception ignored) {}
+        }
     }
 
     void importLocations(Uri u) throws Exception {
@@ -390,6 +492,11 @@ public class MainActivity extends Activity {
         }
         return -1;
     }
+    static String val(List<String> row,int i) {
+        if (row == null || i < 0 || i >= row.size() || row.get(i) == null) return "";
+        return row.get(i).trim();
+    }
+
     static int parseInt(String s, int d) { try { return (int)Math.round(parseDouble(s, d)); } catch (Exception e) { return d; } }
     static double parseDouble(String s, double d) {
         if (s == null || s.trim().isEmpty()) return d;
@@ -499,6 +606,7 @@ public class MainActivity extends Activity {
     public class Bridge {
         @JavascriptInterface public void importWithdrawal() { picker(WITHDRAWAL, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void importReport() { picker(REPORT, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/pdf"); }
+        @JavascriptInterface public void importLastEntries() { picker(LAST_ENTRY, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void importLocations() { picker(LOC, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void importNegatives() { if (batchId==0){toast("Selecione uma lista primeiro",false);return;} picker(NEG, false, null, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
         @JavascriptInterface public void exportMissing() { chooseExportScope(); }
@@ -529,7 +637,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void coverSearch() { if(selectedId==0){toast("Selecione um item primeiro",false);return;} toast("Buscando uma nova capa...",true);loadCoverAsync(selectedId,true); }
         @JavascriptInterface public void soundSettings() { runOnUiThread(() -> { LinearLayout l=new LinearLayout(MainActivity.this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(48,20,48,8);CheckBox ok=new CheckBox(MainActivity.this);ok.setText("Som de conferência correta");ok.setChecked(prefs.getBoolean("sound_ok",true));CheckBox er=new CheckBox(MainActivity.this);er.setText("Som de erro");er.setChecked(prefs.getBoolean("sound_error",true));l.addView(ok);l.addView(er);new AlertDialog.Builder(MainActivity.this).setTitle("Configurações de som").setView(l).setPositiveButton("Salvar",(d,w)->prefs.edit().putBoolean("sound_ok",ok.isChecked()).putBoolean("sound_error",er.isChecked()).apply()).setNegativeButton("Cancelar",null).show(); }); }
         @JavascriptInterface public void printMissing() { MainActivity.this.printMissing(); }
-        @JavascriptInterface public void about() { runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this).setTitle("Conferente Pedidos Online").setMessage("Versão V31.3.6 Android Nativo\n\nItens, pacotes, Mercado Livre, Amazon PDF, SimpleSet, negativos, histórico, exportação, impressão e capas.").setPositiveButton("OK",null).show()); }
+        @JavascriptInterface public void about() { runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this).setTitle("Conferente Pedidos Online").setMessage("Versão V31.3.7 Android Nativo\n\nItens, pacotes, Mercado Livre, Amazon PDF, SimpleSet, negativos, histórico, exportação, impressão e capas.").setPositiveButton("OK",null).show()); }
     }
 
     static class ItemIn { String order="",buyer="",doc="",platform="",code="",desc="",tracking="",location="",nerus="",source=""; int qty=1; double price=0; }
@@ -543,11 +651,12 @@ public class MainActivity extends Activity {
     }
 
     static class DB extends SQLiteOpenHelper {
-        DB(Context c){super(c,"conferente_v31.db",null,4);}
+        DB(Context c){super(c,"conferente_v31.db",null,5);}
         @Override public void onCreate(SQLiteDatabase d){
             d.execSQL("CREATE TABLE batches(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,source_file TEXT DEFAULT '',created TEXT DEFAULT CURRENT_TIMESTAMP)");
-            d.execSQL("CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER,order_id TEXT,buyer TEXT,doc TEXT,platform TEXT,code TEXT,sku TEXT DEFAULT '',description TEXT,qty INTEGER,checked INTEGER DEFAULT 0,unit_price REAL DEFAULT 0,location TEXT DEFAULT '',nerus TEXT DEFAULT '',negative INTEGER DEFAULT 0,negative_product TEXT DEFAULT '',negative_grade TEXT DEFAULT '',negative_last_purchase TEXT DEFAULT '',negative_profit_center TEXT DEFAULT '',tracking TEXT DEFAULT '',source TEXT DEFAULT '',status TEXT DEFAULT 'PENDENTE')");
+            d.execSQL("CREATE TABLE items(id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER,order_id TEXT,buyer TEXT,doc TEXT,platform TEXT,code TEXT,sku TEXT DEFAULT '',description TEXT,qty INTEGER,checked INTEGER DEFAULT 0,unit_price REAL DEFAULT 0,location TEXT DEFAULT '',nerus TEXT DEFAULT '',negative INTEGER DEFAULT 0,negative_product TEXT DEFAULT '',negative_grade TEXT DEFAULT '',negative_last_purchase TEXT DEFAULT '',negative_profit_center TEXT DEFAULT '',tracking TEXT DEFAULT '',source TEXT DEFAULT '',status TEXT DEFAULT 'PENDENTE',last_entry_date TEXT DEFAULT '',last_entry_nf TEXT DEFAULT '',last_entry_qty TEXT DEFAULT '',last_entry_key INTEGER DEFAULT 0)");
             d.execSQL("CREATE TABLE locations(code TEXT PRIMARY KEY,location TEXT,updated TEXT DEFAULT CURRENT_TIMESTAMP)");
+            d.execSQL("CREATE TABLE last_entries(code TEXT PRIMARY KEY,entry_date TEXT DEFAULT '',entry_nf TEXT DEFAULT '',entry_qty TEXT DEFAULT '',entry_key INTEGER DEFAULT 0,updated TEXT DEFAULT CURRENT_TIMESTAMP)");
             d.execSQL("CREATE TABLE packages(id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER,order_id TEXT DEFAULT '',tracking TEXT,key TEXT,checked INTEGER DEFAULT 0,checked_at TEXT,UNIQUE(batch_id,key))");
             d.execSQL("CREATE TABLE history(id INTEGER PRIMARY KEY AUTOINCREMENT,batch_id INTEGER,item_id INTEGER,kind TEXT,created TEXT DEFAULT CURRENT_TIMESTAMP)");
             d.execSQL("CREATE INDEX idx_items_batch_code ON items(batch_id,code)"); d.execSQL("CREATE INDEX idx_items_order ON items(order_id,code)"); d.execSQL("CREATE INDEX idx_pkg_key ON packages(batch_id,key)");
@@ -556,6 +665,11 @@ public class MainActivity extends Activity {
         @Override public void onUpgrade(SQLiteDatabase d,int old,int now){
             alter(d,"ALTER TABLE batches ADD COLUMN source_file TEXT DEFAULT ''");
             alter(d,"ALTER TABLE items ADD COLUMN sku TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN unit_price REAL DEFAULT 0");alter(d,"ALTER TABLE items ADD COLUMN nerus TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN negative_product TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN negative_grade TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN negative_last_purchase TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN negative_profit_center TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN source TEXT DEFAULT ''");alter(d,"ALTER TABLE items ADD COLUMN status TEXT DEFAULT 'PENDENTE'");
+            alter(d,"ALTER TABLE items ADD COLUMN last_entry_date TEXT DEFAULT ''");
+            alter(d,"ALTER TABLE items ADD COLUMN last_entry_nf TEXT DEFAULT ''");
+            alter(d,"ALTER TABLE items ADD COLUMN last_entry_qty TEXT DEFAULT ''");
+            alter(d,"ALTER TABLE items ADD COLUMN last_entry_key INTEGER DEFAULT 0");
+            alter(d,"CREATE TABLE IF NOT EXISTS last_entries(code TEXT PRIMARY KEY,entry_date TEXT DEFAULT '',entry_nf TEXT DEFAULT '',entry_qty TEXT DEFAULT '',entry_key INTEGER DEFAULT 0,updated TEXT DEFAULT CURRENT_TIMESTAMP)");
             alter(d,"ALTER TABLE locations ADD COLUMN updated TEXT DEFAULT CURRENT_TIMESTAMP");alter(d,"ALTER TABLE packages ADD COLUMN order_id TEXT DEFAULT ''");alter(d,"ALTER TABLE packages ADD COLUMN checked_at TEXT");
             alter(d,"CREATE INDEX idx_items_batch_code ON items(batch_id,code)");alter(d,"CREATE INDEX idx_items_order ON items(order_id,code)");alter(d,"CREATE INDEX idx_pkg_key ON packages(batch_id,key)");
         }
@@ -597,14 +711,56 @@ public class MainActivity extends Activity {
         void applyCatalog(int b){getWritableDatabase().execSQL("UPDATE items SET location=COALESCE((SELECT location FROM locations WHERE locations.code=items.code OR locations.code=items.sku LIMIT 1),location) WHERE batch_id=?",new Object[]{b});}
         void applyCatalogAll(){getWritableDatabase().execSQL("UPDATE items SET location=COALESCE((SELECT location FROM locations WHERE locations.code=items.code OR locations.code=items.sku LIMIT 1),location)");}
 
+
+        void replaceLastEntries(Collection<LastEntryIn> rows){
+            SQLiteDatabase d=getWritableDatabase();
+            d.beginTransaction();
+            try{
+                d.delete("last_entries",null,null);
+                for(LastEntryIn x:rows){
+                    ContentValues v=new ContentValues();
+                    v.put("code",cleanCode(x.code));
+                    v.put("entry_date",x.date);
+                    v.put("entry_nf",x.nf);
+                    v.put("entry_qty",x.qty);
+                    v.put("entry_key",x.key);
+                    v.put("updated",new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.ROOT).format(new Date()));
+                    d.insertWithOnConflict("last_entries",null,v,SQLiteDatabase.CONFLICT_REPLACE);
+                }
+                d.setTransactionSuccessful();
+            }finally{d.endTransaction();}
+        }
+
+        void applyLastEntries(int b){
+            SQLiteDatabase d=getWritableDatabase();
+            d.execSQL(
+                "UPDATE items SET " +
+                "last_entry_date=COALESCE((SELECT entry_date FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_nf=COALESCE((SELECT entry_nf FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_qty=COALESCE((SELECT entry_qty FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_key=COALESCE((SELECT entry_key FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),0) " +
+                "WHERE batch_id=?", new Object[]{b});
+        }
+
+        void applyLastEntriesAll(){
+            SQLiteDatabase d=getWritableDatabase();
+            d.execSQL("UPDATE items SET last_entry_date='',last_entry_nf='',last_entry_qty='',last_entry_key=0");
+            d.execSQL(
+                "UPDATE items SET " +
+                "last_entry_date=COALESCE((SELECT entry_date FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_nf=COALESCE((SELECT entry_nf FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_qty=COALESCE((SELECT entry_qty FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),'')," +
+                "last_entry_key=COALESCE((SELECT entry_key FROM last_entries le WHERE le.code=items.code OR le.code=items.sku ORDER BY entry_key DESC LIMIT 1),0)");
+        }
+
         int[] applyNegatives(int b,List<NegIn> rows){SQLiteDatabase d=getWritableDatabase();d.execSQL("UPDATE items SET negative=0,negative_product='',negative_grade='',negative_last_purchase='',negative_profit_center='' WHERE batch_id=?",new Object[]{b});int matched=0,unmatched=0;for(NegIn n:rows){ContentValues v=new ContentValues();v.put("negative",n.qty);v.put("negative_product",n.product);v.put("negative_grade",n.grade);v.put("negative_last_purchase",n.lastPurchase);v.put("negative_profit_center",n.profitCenter);int x=d.update("items",v,"batch_id=? AND (code=? OR sku=?)",new String[]{""+b,n.code,n.code});if(x>0)matched+=x;else unmatched++;}return new int[]{matched,unmatched};}
 
         Map<String,String> scanItem(int b,String raw){String code=cleanCode(raw);Map<String,String>r=new HashMap<>();SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT id,qty,checked,description FROM items WHERE batch_id=? AND (code=? OR sku=?) AND checked<qty ORDER BY id LIMIT 1",new String[]{""+b,code,code});if(c.moveToFirst()){int id=c.getInt(0),q=c.getInt(1),ch=c.getInt(2)+1;String desc=c.getString(3);d.execSQL("UPDATE items SET checked=?,status=? WHERE id=?",new Object[]{ch,ch>=q?"CONFERIDO":"PARCIAL",id});d.execSQL("INSERT INTO history(batch_id,item_id,kind) VALUES(?,?,'item')",new Object[]{b,id});r.put("ok","true");r.put("itemId",""+id);r.put("message",ch>=q?"Conferido: "+desc:"Bip "+ch+"/"+q+" • "+desc);}else{Cursor x=d.rawQuery("SELECT id FROM items WHERE batch_id=? AND (code=? OR sku=?)",new String[]{""+b,code,code});boolean exists=x.moveToFirst();x.close();r.put("ok","false");r.put("message",exists?"Quantidade já atingida para este produto":"Produto não localizado na lista");}c.close();return r;}
         Map<String,String> scanPackage(int b,String raw){Map<String,String>r=new HashMap<>();String k=trackKey(raw);if(k.isEmpty()){r.put("ok","false");r.put("message","Rastreio inválido");return r;}SQLiteDatabase d=getWritableDatabase();Cursor c=d.rawQuery("SELECT id,checked,order_id FROM packages WHERE batch_id=? AND key=?",new String[]{""+b,k});if(!c.moveToFirst()){r.put("ok","false");r.put("message","Pacote não encontrado");}else if(c.getInt(1)>0){r.put("ok","false");r.put("message","Pacote já conferido");}else{int id=c.getInt(0);String order=c.getString(2);d.execSQL("UPDATE packages SET checked=1,checked_at=CURRENT_TIMESTAMP WHERE id=?",new Object[]{id});d.execSQL("INSERT INTO history(batch_id,item_id,kind) VALUES(?,?,'package')",new Object[]{b,id});r.put("ok","true");r.put("message","Pacote conferido • "+(order==null?"":order));}c.close();return r;}
         boolean undoLast(int b,String mode){SQLiteDatabase d=getWritableDatabase();String kind=mode.equals("packages")?"package":"item";Cursor c=d.rawQuery("SELECT id,item_id FROM history WHERE batch_id=? AND kind=? ORDER BY id DESC LIMIT 1",new String[]{""+b,kind});if(!c.moveToFirst()){c.close();return false;}int hid=c.getInt(0),id=c.getInt(1);if(kind.equals("item")){Cursor x=d.rawQuery("SELECT checked,qty FROM items WHERE id=?",new String[]{""+id});if(x.moveToFirst()){int ch=Math.max(0,x.getInt(0)-1),q=x.getInt(1);d.execSQL("UPDATE items SET checked=?,status=? WHERE id=?",new Object[]{ch,ch==0?"PENDENTE":ch>=q?"CONFERIDO":"PARCIAL",id});}x.close();}else d.execSQL("UPDATE packages SET checked=0,checked_at=NULL WHERE id=?",new Object[]{id});d.delete("history","id=?",new String[]{""+hid});c.close();return true;}
 
-        String itemsJson(int b){JSONArray a=new JSONArray();Cursor c=getReadableDatabase().rawQuery("SELECT id,order_id,buyer,doc,platform,code,description,qty,checked,location,nerus,negative,tracking,source,status,negative_product,negative_grade,negative_last_purchase,negative_profit_center FROM items WHERE batch_id=? ORDER BY platform,order_id,id",new String[]{""+b});while(c.moveToNext()){try{JSONObject o=new JSONObject();int q=c.getInt(7),ch=c.getInt(8);o.put("id",c.getInt(0));o.put("order",nz(c.getString(1)));o.put("buyer",nz(c.getString(2)));o.put("doc",nz(c.getString(3)));o.put("platform",nz(c.getString(4)));o.put("code",nz(c.getString(5)));o.put("description",nz(c.getString(6)));o.put("qty",q);o.put("checked",ch);o.put("missing",Math.max(0,q-ch));o.put("location",nz(c.getString(9)));o.put("nerus",nz(c.getString(10)));o.put("negative",c.getInt(11));o.put("tracking",nz(c.getString(12)));o.put("source",nz(c.getString(13)));o.put("status",nz(c.getString(14)));o.put("negative_product",nz(c.getString(15)));o.put("negative_grade",nz(c.getString(16)));o.put("negative_last_purchase",nz(c.getString(17)));o.put("negative_profit_center",nz(c.getString(18)));a.put(o);}catch(Exception ignored){}}c.close();return a.toString();}
-        String packageItemsJson(int b){JSONArray a=new JSONArray();Cursor c=getReadableDatabase().rawQuery("SELECT i.id,i.order_id,i.buyer,i.doc,i.platform,i.code,i.description,i.location,i.nerus,i.negative,i.tracking,i.source,COALESCE(p.checked,0),COALESCE(p.tracking,'') FROM items i LEFT JOIN packages p ON p.batch_id=i.batch_id AND (p.order_id=i.order_id OR p.key=?) WHERE i.batch_id=? ORDER BY i.platform,i.order_id,i.id",new String[]{"__never__",""+b});while(c.moveToNext()){try{JSONObject o=new JSONObject();int checked=c.getInt(12)>0?1:0;o.put("id",c.getInt(0));o.put("order",nz(c.getString(1)));o.put("buyer",nz(c.getString(2)));o.put("doc",nz(c.getString(3)));o.put("platform",nz(c.getString(4)));o.put("code",nz(c.getString(5)));o.put("description",nz(c.getString(6)));o.put("qty",1);o.put("checked",checked);o.put("missing",checked>0?0:1);o.put("location",nz(c.getString(7)));o.put("nerus",nz(c.getString(8)));o.put("negative",c.getInt(9));o.put("tracking",nz(c.getString(13).isEmpty()?c.getString(10):c.getString(13)));o.put("source",nz(c.getString(11)));o.put("status",checked>0?"CONFERIDO":"PENDENTE");a.put(o);}catch(Exception ignored){}}c.close();return a.toString();}
+        String itemsJson(int b){JSONArray a=new JSONArray();Cursor c=getReadableDatabase().rawQuery("SELECT id,order_id,buyer,doc,platform,code,description,qty,checked,location,nerus,negative,tracking,source,status,negative_product,negative_grade,negative_last_purchase,negative_profit_center,last_entry_date,last_entry_nf,last_entry_qty,last_entry_key FROM items WHERE batch_id=? ORDER BY platform,order_id,id",new String[]{""+b});while(c.moveToNext()){try{JSONObject o=new JSONObject();int q=c.getInt(7),ch=c.getInt(8);o.put("id",c.getInt(0));o.put("order",nz(c.getString(1)));o.put("buyer",nz(c.getString(2)));o.put("doc",nz(c.getString(3)));o.put("platform",nz(c.getString(4)));o.put("code",nz(c.getString(5)));o.put("description",nz(c.getString(6)));o.put("qty",q);o.put("checked",ch);o.put("missing",Math.max(0,q-ch));o.put("location",nz(c.getString(9)));o.put("nerus",nz(c.getString(10)));o.put("negative",c.getInt(11));o.put("tracking",nz(c.getString(12)));o.put("source",nz(c.getString(13)));o.put("status",nz(c.getString(14)));o.put("negative_product",nz(c.getString(15)));o.put("negative_grade",nz(c.getString(16)));o.put("negative_last_purchase",nz(c.getString(17)));o.put("negative_profit_center",nz(c.getString(18)));o.put("last_entry_date",nz(c.getString(19)));o.put("last_entry_nf",nz(c.getString(20)));o.put("last_entry_qty",nz(c.getString(21)));o.put("last_entry_key",c.getInt(22));a.put(o);}catch(Exception ignored){}}c.close();return a.toString();}
+        String packageItemsJson(int b){JSONArray a=new JSONArray();Cursor c=getReadableDatabase().rawQuery("SELECT i.id,i.order_id,i.buyer,i.doc,i.platform,i.code,i.description,i.location,i.nerus,i.negative,i.tracking,i.source,COALESCE(p.checked,0),COALESCE(p.tracking,''),i.last_entry_date,i.last_entry_nf,i.last_entry_qty,i.last_entry_key FROM items i LEFT JOIN packages p ON p.batch_id=i.batch_id AND (p.order_id=i.order_id OR p.key=?) WHERE i.batch_id=? ORDER BY i.platform,i.order_id,i.id",new String[]{"__never__",""+b});while(c.moveToNext()){try{JSONObject o=new JSONObject();int checked=c.getInt(12)>0?1:0;o.put("id",c.getInt(0));o.put("order",nz(c.getString(1)));o.put("buyer",nz(c.getString(2)));o.put("doc",nz(c.getString(3)));o.put("platform",nz(c.getString(4)));o.put("code",nz(c.getString(5)));o.put("description",nz(c.getString(6)));o.put("qty",1);o.put("checked",checked);o.put("missing",checked>0?0:1);o.put("location",nz(c.getString(7)));o.put("nerus",nz(c.getString(8)));o.put("negative",c.getInt(9));o.put("tracking",nz(c.getString(13).isEmpty()?c.getString(10):c.getString(13)));o.put("source",nz(c.getString(11)));o.put("status",checked>0?"CONFERIDO":"PENDENTE");o.put("last_entry_date",nz(c.getString(14)));o.put("last_entry_nf",nz(c.getString(15)));o.put("last_entry_qty",nz(c.getString(16)));o.put("last_entry_key",c.getInt(17));a.put(o);}catch(Exception ignored){}}c.close();return a.toString();}
         int[] summary(int b){Cursor c=getReadableDatabase().rawQuery("SELECT COALESCE(SUM(qty),0),COALESCE(SUM(MIN(qty,checked)),0),COALESCE(SUM(MAX(qty-checked,0)),0),COALESCE(SUM(MAX(checked-qty,0)),0) FROM items WHERE batch_id=?",new String[]{""+b});c.moveToFirst();int[]x={c.getInt(0),c.getInt(1),c.getInt(2),c.getInt(3)};c.close();return x;}
         String summaryJson(int b){int[]x=summary(b);int p=x[0]==0?0:(int)Math.round(x[1]*100.0/x[0]);return"{\"total\":"+x[0]+",\"checked\":"+x[1]+",\"missing\":"+x[2]+",\"excess\":"+x[3]+",\"percent\":"+p+"}";}
         int[] packageSummary(int b){Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*),COALESCE(SUM(checked),0) FROM packages WHERE batch_id=?",new String[]{""+b});c.moveToFirst();int[]x={c.getInt(0),c.getInt(1)};c.close();return x;}
@@ -616,6 +772,87 @@ public class MainActivity extends Activity {
     }
 
     static class Xlsx {
+
+        interface RowVisitor { void onRow(List<String> row) throws Exception; }
+
+        static void eachRow(File file, RowVisitor visitor) throws Exception {
+            try (ZipFile zip = new ZipFile(file)) {
+                final List<String> shared = new ArrayList<>();
+
+                ZipEntry ss = zip.getEntry("xl/sharedStrings.xml");
+                if (ss != null) {
+                    javax.xml.parsers.SAXParserFactory sf = javax.xml.parsers.SAXParserFactory.newInstance();
+                    sf.setNamespaceAware(false);
+                    javax.xml.parsers.SAXParser sp = sf.newSAXParser();
+                    try (InputStream sin = zip.getInputStream(ss)) {
+                        sp.parse(sin, new org.xml.sax.helpers.DefaultHandler() {
+                            boolean inSi=false,inT=false;
+                            StringBuilder cur=null;
+                            @Override public void startElement(String uri,String local,String qName,org.xml.sax.Attributes a){
+                                if("si".equals(qName)){inSi=true;cur=new StringBuilder();}
+                                else if(inSi && "t".equals(qName)) inT=true;
+                            }
+                            @Override public void characters(char[] ch,int st,int len){if(inSi&&inT&&cur!=null)cur.append(ch,st,len);}
+                            @Override public void endElement(String uri,String local,String qName){
+                                if("t".equals(qName))inT=false;
+                                else if("si".equals(qName)){shared.add(cur==null?"":cur.toString());cur=null;inSi=false;}
+                            }
+                        });
+                    }
+                }
+
+                ZipEntry sh = zip.getEntry("xl/worksheets/sheet1.xml");
+                if (sh == null) throw new Exception("Planilha sem primeira aba");
+
+                javax.xml.parsers.SAXParserFactory sf = javax.xml.parsers.SAXParserFactory.newInstance();
+                sf.setNamespaceAware(false);
+                javax.xml.parsers.SAXParser sp = sf.newSAXParser();
+
+                try (InputStream sin = zip.getInputStream(sh)) {
+                    sp.parse(sin, new org.xml.sax.helpers.DefaultHandler() {
+                        List<String> row=null;
+                        int col=0;
+                        String cellType="";
+                        boolean inValue=false,inInline=false;
+                        StringBuilder value=new StringBuilder();
+
+                        @Override public void startElement(String uri,String local,String qName,org.xml.sax.Attributes a){
+                            if("row".equals(qName)) row=new ArrayList<>();
+                            else if("c".equals(qName)){
+                                col=colIndex(a.getValue("r"));
+                                cellType=a.getValue("t"); if(cellType==null)cellType="";
+                                value.setLength(0);
+                            } else if("v".equals(qName)){inValue=true;value.setLength(0);}
+                            else if("t".equals(qName) && ("inlineStr".equals(cellType)||"str".equals(cellType))){inInline=true;value.setLength(0);}
+                        }
+
+                        @Override public void characters(char[] ch,int st,int len){
+                            if(inValue||inInline)value.append(ch,st,len);
+                        }
+
+                        @Override public void endElement(String uri,String local,String qName) throws org.xml.sax.SAXException {
+                            if("v".equals(qName))inValue=false;
+                            else if("t".equals(qName))inInline=false;
+                            else if("c".equals(qName)){
+                                if(row==null)return;
+                                while(row.size()<=col)row.add("");
+                                String v=value.toString();
+                                if("s".equals(cellType)&&!v.isEmpty()){
+                                    try{int x=Integer.parseInt(v.trim());if(x>=0&&x<shared.size())v=shared.get(x);}catch(Exception ignored){}
+                                }
+                                row.set(col,v);
+                            } else if("row".equals(qName)){
+                                if(row!=null){
+                                    try{visitor.onRow(row);}catch(Exception ex){throw new org.xml.sax.SAXException(ex);}
+                                }
+                                row=null;
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
         static List<List<String>> read(InputStream in) throws Exception {
             // Leitor XLSX otimizado para Android.
             // Não cria DOM da planilha inteira: sharedStrings e sheet são processados com SAX.
