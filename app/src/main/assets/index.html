@@ -170,6 +170,245 @@ button{-webkit-tap-highlight-color:transparent}
   color:#e8eef5;font-size:13px;font-weight:bold
 }
 
+
+/* =========================================================
+   V31.3.6 - LAYOUT EXPANDIDO
+   Mantém funções; altera somente apresentação.
+   ========================================================= */
+body{font-size:11px}
+
+/* área principal maior; painel direito agora é compacto */
+.app{
+  grid-template-columns:minmax(0,1fr) 16.5% !important;
+}
+
+/* menu lateral continua como drawer retrátil */
+.side{
+  width:min(260px,24vw) !important;
+}
+.main{
+  padding:7px 8px 7px 44px !important;
+}
+
+/* cabeçalho compacto */
+.topbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 86px 115px 145px;
+  gap:7px;
+  align-items:center;
+  margin-bottom:6px;
+}
+.appTitle{
+  font-size:14px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color:#eef4fb;
+}
+.appTitle small{
+  font-size:9px;
+  font-weight:400;
+  color:#91a5b8;
+  margin-left:7px;
+}
+.topFilter,.topSort{
+  height:34px;
+  border:1px solid #2a3947;
+  border-radius:5px;
+  background:#0b1722;
+  color:white;
+  padding:0 7px;
+  outline:none;
+  font-size:9.2px;
+}
+.scanTitle{display:none}
+.scanrow{
+  grid-template-columns:minmax(0,1fr) 68px 145px;
+  margin-bottom:6px;
+}
+.scan{height:36px;font-size:13px}
+.blue{height:36px;font-size:11px}
+.mode{height:36px}
+.mode button{font-size:10px}
+
+/* cards antigos removidos visualmente; resumo vai para rodapé */
+.cards{display:none}
+
+/* tabela ocupa praticamente todo o centro */
+.tablebox{
+  flex:1;
+  min-height:0;
+}
+.toolbar{
+  height:35px;
+  grid-template-columns:minmax(0,1fr) 1px 1px 29px;
+}
+.toolbar input{
+  font-size:10.2px;
+  padding:0 9px;
+}
+.toolbar select{
+  width:1px;
+  opacity:0;
+  pointer-events:none;
+  padding:0;
+  border:0;
+}
+
+/* letras maiores na lista */
+.head,.row{
+  grid-template-columns:118px minmax(200px,1fr) 42px 48px 58px 82px 74px;
+  padding:0 8px;
+  column-gap:5px;
+}
+.head{
+  height:32px;
+  font-size:8.7px;
+}
+.row{
+  min-height:39px;
+  font-size:10.7px;
+}
+.desc small{
+  font-size:8.4px;
+}
+.status{
+  font-size:8.8px;
+}
+.rows{
+  height:calc(100% - 67px);
+}
+
+/* painel direito: somente busca web + histórico */
+.detail{
+  padding:8px 8px 7px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.webOnly{
+  flex:0 0 auto;
+}
+.webOnly .action{
+  height:42px;
+  margin:0 0 9px;
+  font-size:11px;
+  background:linear-gradient(#2088f7,#1574df);
+}
+.historyTitle{
+  border-top:1px solid #2a3947;
+  padding-top:8px;
+  font-size:10.5px;
+  font-weight:bold;
+  margin-bottom:6px;
+}
+.historyBox{
+  flex:1;
+  min-height:0;
+  overflow:auto;
+}
+.historyItem{
+  border-bottom:1px solid #22313f;
+  padding:7px 2px;
+  font-size:9.2px;
+  line-height:1.3;
+}
+.historyCode{
+  display:flex;
+  justify-content:space-between;
+  gap:5px;
+  align-items:center;
+}
+.historyCode span:first-child{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.hbadge{
+  padding:3px 5px;
+  border-radius:4px;
+  font-weight:bold;
+  font-size:7.6px;
+  flex:0 0 auto;
+}
+.hok{background:#10a94d;color:white}
+.herr{background:#db3636;color:white}
+.htime{color:#94a4b4;font-size:8.2px;margin-top:2px}
+
+/* ocultos mas mantidos no DOM para compatibilidade com JavaScript/Java */
+.compatHidden{
+  display:none !important;
+}
+
+/* rodapé com TOTAL / CONFERIDOS / FALTANDO */
+.summaryFooter{
+  height:56px;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr minmax(170px,1.25fr);
+  gap:0;
+  border-top:1px solid #2a3947;
+  background:#091522;
+  margin-top:6px;
+}
+.sumBlock{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:5px 10px;
+  border-right:1px solid #22313f;
+  min-width:0;
+}
+.sumIcon{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:#14477f;font-size:16px;flex:0 0 auto;
+}
+.sumBlock:nth-child(2) .sumIcon{background:#0aa64a}
+.sumBlock:nth-child(3) .sumIcon{background:#d83e3e}
+.sumText{min-width:0}
+.sumText label{
+  display:block;
+  color:#aab6c3;
+  font-size:8px;
+  font-weight:bold;
+}
+.sumText strong{
+  display:inline-block;
+  font-size:17px;
+  line-height:1.05;
+  margin-top:2px;
+}
+.sumText small{
+  color:#9eabb8;
+  font-size:8px;
+  margin-left:4px;
+}
+.sumMeta{
+  padding:7px 10px;
+  font-size:8.2px;
+  line-height:1.45;
+  overflow:hidden;
+}
+.sumMeta b{
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* histórico antigo do centro não aparece */
+.recent{display:none !important}
+
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr) 17.5% !important}
+  .topbar{grid-template-columns:minmax(0,1fr) 75px 105px 138px}
+  .head,.row{
+    grid-template-columns:105px minmax(160px,1fr) 38px 43px 52px 74px 67px;
+  }
+  .row{font-size:9.8px}
+}
+
 </style>
 </head>
 <body>
@@ -210,46 +449,105 @@ button{-webkit-tap-highlight-color:transparent}
 </aside>
 
 <main class="main">
-  <div class="scanTitle">BIPE PARA CONFERIR PRODUTOS OU RASTREIOS</div>
-  <div class="scanrow">
-    <input id="scan" class="scan" placeholder="Bipe ISBN / EAN / SKU ou Rastreio" onkeydown="if(event.key==='Enter')doScan()">
-    <button class="blue" onclick="doScan()">▥&nbsp; BIPAR</button>
+  <div class="topbar">
+    <div class="appTitle">Conferente de Pedidos <small>V31.3.6</small></div>
+    <select id="topFilter" class="topFilter" onchange="syncTopFilter()">
+      <option value="all">Filtros: Todos</option>
+      <option value="pending">Pendentes</option>
+      <option value="partial">Parciais</option>
+      <option value="checked">Conferidos</option>
+      <option value="missing">Faltando</option>
+      <option value="negative">Negativos</option>
+    </select>
+    <select id="topSort" class="topSort" onchange="syncTopSort()">
+      <option value="code">Ordenar: Código</option>
+      <option value="desc">Ordenar: Descrição</option>
+      <option value="loc">Ordenar: Localização</option>
+    </select>
     <div class="modeWrap">
       <div class="modeLabel">MODO</div>
-      <div class="mode"><button id="mi" class="on" onclick="setMode('items')">Itens</button><button id="mp" onclick="setMode('packages')">Pacotes</button></div>
+      <div class="mode">
+        <button id="mi" class="on" onclick="setMode('items')">Itens</button>
+        <button id="mp" onclick="setMode('packages')">Pacotes</button>
+      </div>
     </div>
   </div>
 
-  <div class="cards">
-    <div class="card"><label>TOTAL</label><strong class="cblue" id="total">0</strong><small>itens</small></div>
-    <div class="card"><label>CONFERIDOS</label><strong class="green" id="checked">0</strong><small id="pct">(0%)</small></div>
-    <div class="card"><label>FALTANDO</label><strong class="red" id="missing">0</strong><small>itens</small></div>
-    <div class="card"><label>EXCEDENTES</label><strong id="excess">0</strong><small>itens</small></div>
-    <div class="card"><label>ÚLTIMO BIP</label><strong class="green" style="font-size:10px" id="last">—</strong><small id="lasttime"></small></div>
+  <div class="scanrow">
+    <input id="scan" class="scan" placeholder="Bipe ISBN / EAN / SKU ou Rastreio" onkeydown="if(event.key==='Enter')doScan()">
+    <button class="blue" onclick="doScan()">▥&nbsp; BIPAR</button>
+    <div></div>
+  </div>
+
+  <!-- elementos antigos mantidos ocultos para preservar integração -->
+  <div class="cards compatHidden">
+    <div class="card"><label>TOTAL</label><strong id="total">0</strong></div>
+    <div class="card"><label>CONFERIDOS</label><strong id="checked">0</strong><small id="pct">(0%)</small></div>
+    <div class="card"><label>FALTANDO</label><strong id="missing">0</strong></div>
+    <div class="card"><label>EXCEDENTES</label><strong id="excess">0</strong></div>
+    <div class="card"><label>ÚLTIMO BIP</label><strong id="last">—</strong><small id="lasttime"></small></div>
   </div>
 
   <div class="tablebox">
     <div class="toolbar">
       <input id="search" placeholder="⌕  Pesquisar por código, descrição, comprador..." oninput="render()">
-      <select id="filter" onchange="render()"><option value="all">Todos</option><option value="pending">Pendentes</option><option value="partial">Parciais</option><option value="checked">Conferidos</option><option value="missing">Faltando</option><option value="negative">Negativos</option></select>
-      <select id="sort" onchange="render()"><option value="code">Ordenar: Código</option><option value="desc">Ordenar: Descrição</option><option value="loc">Ordenar: Localização</option></select>
+      <select id="filter" onchange="render()">
+        <option value="all">Todos</option><option value="pending">Pendentes</option>
+        <option value="partial">Parciais</option><option value="checked">Conferidos</option>
+        <option value="missing">Faltando</option><option value="negative">Negativos</option>
+      </select>
+      <select id="sort" onchange="render()">
+        <option value="code">Ordenar: Código</option><option value="desc">Ordenar: Descrição</option>
+        <option value="loc">Ordenar: Localização</option>
+      </select>
       <div class="listIcon">☷</div>
     </div>
-    <div class="head"><div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div><div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div></div>
+    <div class="head">
+      <div>CÓDIGO / ISBN</div><div>DESCRIÇÃO DO PRODUTO</div><div>QTD.</div>
+      <div>CONF.</div><div>FALTANDO</div><div>LOCALIZAÇÃO SS</div><div>SITUAÇÃO</div>
+    </div>
     <div id="rows" class="rows"><div class="empty">Nenhuma lista selecionada</div></div>
   </div>
 
-  <div class="recent"><b>ÚLTIMOS BIPES</b><div id="chips" class="chips">—</div></div>
+  <div class="recent compatHidden"><b>ÚLTIMOS BIPES</b><div id="chips" class="chips">—</div></div>
+
+  <div class="summaryFooter">
+    <div class="sumBlock">
+      <div class="sumIcon">◇</div>
+      <div class="sumText"><label>TOTAL</label><strong id="footTotal">0</strong><small>itens</small></div>
+    </div>
+    <div class="sumBlock">
+      <div class="sumIcon">✓</div>
+      <div class="sumText"><label>CONFERIDOS</label><strong id="footChecked">0</strong><small id="footPct">(0%)</small></div>
+    </div>
+    <div class="sumBlock">
+      <div class="sumIcon">×</div>
+      <div class="sumText"><label>FALTANDO</label><strong id="footMissing">0</strong><small>itens</small></div>
+    </div>
+    <div class="sumMeta">
+      <span>Lista carregada:</span><b id="footBatch">Nenhuma lista</b>
+      <span>Modo: </span><b id="footMode">Itens</b>
+    </div>
+  </div>
 </main>
 
 <aside class="detail">
-  <div class="detailHead"><h3>DETALHES DO ITEM</h3><span class="expand">↗</span></div>
-  <img id="cover" class="cover" alt="" onclick="openCoverModal()">
-  <div id="dtitle" class="title">Selecione um item</div>
-  <div id="dauthor" class="author"></div>
-  <div id="details"></div>
-  <button class="action" onclick="Android.openCover()">▧&nbsp; ABRIR IMAGEM</button>
-  <button class="action gray" onclick="Android.searchWeb()">◎&nbsp; PESQUISAR NA WEB</button>
+  <div class="webOnly">
+    <button class="action" onclick="Android.searchWeb()">◎&nbsp; BUSCAR NA WEB<br><span style="font-size:8px;font-weight:normal">Ver capa do produto</span></button>
+  </div>
+
+  <div class="historyTitle">◴ &nbsp;ÚLTIMOS BIPES</div>
+  <div id="historyBox" class="historyBox">
+    <div class="empty">Nenhum bip ainda</div>
+  </div>
+
+  <!-- compatibilidade: mantidos no DOM, mas sem ocupar espaço -->
+  <div class="compatHidden">
+    <img id="cover" alt="">
+    <div id="dtitle"></div>
+    <div id="dauthor"></div>
+    <div id="details"></div>
+  </div>
 </aside>
 </div>
 <div id="coverModal" class="coverModal" onclick="if(event.target===this)closeCoverModal()">
@@ -269,13 +567,39 @@ function openCoverModal(){
 }
 function closeCoverModal(){document.getElementById('coverModal').classList.remove('open');}
 function setListType(t){const e=document.getElementById('listTypeBadge'); if(e)e.textContent='Tipo: '+(t||'Pedidos Online');}
-function setMode(m){mode=m;mi.classList.toggle('on',m==='items');mp.classList.toggle('on',m==='packages');Android.setMode(m);}
+function setMode(m){mode=m;mi.classList.toggle('on',m==='items');mp.classList.toggle('on',m==='packages');if(document.getElementById('footMode'))footMode.textContent=m==='packages'?'Pacotes':'Itens';Android.setMode(m);}
 function doScan(){let v=scan.value.trim();if(!v)return;Android.scan(v,mode);scan.value='';scan.focus();}
 function setData(json){data=JSON.parse(json||'[]');render();}
-function setBatch(name){batchName.textContent=name||'Selecione uma lista';}
-function setSummary(j){let x=JSON.parse(j);total.textContent=x.total||0;checked.textContent=x.checked||0;missing.textContent=x.missing||0;excess.textContent=x.excess||0;pct.textContent='('+(x.percent||0)+'%)';}
-function scanResult(j){let x=JSON.parse(j);toastMsg(x.message,x.ok);if(x.code){last.textContent=x.code;lasttime.textContent=x.time||'';recent.unshift(x);recent=recent.slice(0,5);chips.innerHTML=recent.map(r=>`<span class="chip">${r.code}<br><small>${r.time||''}</small></span>`).join('');} Android.requestData();}
+function setBatch(name){batchName.textContent=name||'Selecione uma lista';if(document.getElementById('footBatch'))footBatch.textContent=name||'Nenhuma lista';}
+function setSummary(j){
+let x=JSON.parse(j);
+total.textContent=x.total||0;checked.textContent=x.checked||0;missing.textContent=x.missing||0;excess.textContent=x.excess||0;pct.textContent='('+(x.percent||0)+'%)';
+if(document.getElementById('footTotal'))footTotal.textContent=x.total||0;
+if(document.getElementById('footChecked'))footChecked.textContent=x.checked||0;
+if(document.getElementById('footMissing'))footMissing.textContent=x.missing||0;
+if(document.getElementById('footPct'))footPct.textContent='('+(x.percent||0)+'%)';
+}
+function scanResult(j){
+  let x=JSON.parse(j);
+  toastMsg(x.message,x.ok);
+  if(x.code){
+    last.textContent=x.code;lasttime.textContent=x.time||'';
+    recent.unshift(x);recent=recent.slice(0,12);
+    chips.innerHTML=recent.slice(0,5).map(r=>`<span class="chip">${r.code}<br><small>${r.time||''}</small></span>`).join('');
+    const hb=document.getElementById('historyBox');
+    if(hb){
+      hb.innerHTML=recent.map(r=>{
+        let msg=(r.message||'').toUpperCase();
+        let label=r.ok?'OK':(msg.includes('QUANTIDADE')?'QUANTIDADE ATINGIDA':'NÃO LOCALIZADO');
+        return `<div class="historyItem"><div class="historyCode"><span>${r.code}</span><span class="hbadge ${r.ok?'hok':'herr'}">${label}</span></div><div class="htime">${r.time||''}</div></div>`;
+      }).join('');
+    }
+  }
+  Android.requestData();
+}
 function toastMsg(t,ok=true){toast.textContent=t;toast.style.display='block';toast.style.borderColor=ok?'#2e8b57':'#b33';setTimeout(()=>toast.style.display='none',2200)}
+function syncTopFilter(){filter.value=topFilter.value;render();}
+function syncTopSort(){sort.value=topSort.value;render();}
 function render(){let q=search.value.toLowerCase(),f=filter.value,s=sort.value;let a=data.filter(x=>(!q||(x.code+' '+x.description+' '+x.buyer).toLowerCase().includes(q))&&(f==='all'||(f==='checked'&&x.missing===0)||(f==='pending'&&x.checked===0&&x.missing>0)||(f==='partial'&&x.checked>0&&x.missing>0)||(f==='missing'&&x.missing>0)||(f==='negative'&&Number(x.negative)<0)));a.sort((x,y)=>String(s==='desc'?x.description:s==='loc'?x.location:x.code).localeCompare(String(s==='desc'?y.description:s==='loc'?y.location:y.code)));rows.innerHTML=a.length?a.map((x,i)=>`<div class="row ${selected&&selected.id===x.id?'sel':''}" onclick="selectItem(${x.id})"><div>${x.code}</div><div class="desc">${x.description}<small>${x.buyer||''}</small></div><div>${x.qty}</div><div class="green">${x.checked}</div><div class="${x.missing?'red':'green'}">${x.missing}</div><div>${x.location||''}</div><div class="status ${x.missing?'yellow':'green'}">${x.missing?'PENDENTE':'CONFERIDO'}</div></div>`).join(''):'<div class="empty">Nenhum item encontrado</div>';}
 function selectItem(id){selected=data.find(x=>x.id===id);render();if(!selected)return;dtitle.textContent=selected.description;dauthor.textContent=selected.author||'';details.innerHTML=[['Código / ISBN',selected.code],['Quantidade',selected.qty],['Conferido',selected.checked],['Faltando',selected.missing],['Situação',selected.status||(selected.missing?'PENDENTE':'CONFERIDO')],['Localização SS',selected.location||''],['Plataforma',selected.platform||''],['Comprador',selected.buyer||''],['CPF/CNPJ',selected.doc||''],['Pedido',selected.order||''],['Rastreio',selected.tracking||''],...(Number(selected.negative)<0?[['Estoque negativo',selected.negative],['Produto negativo',selected.negative_product||''],['Grade',selected.negative_grade||''],['Última compra',selected.negative_last_purchase||''],['Centro de lucro',selected.negative_profit_center||'']]:[])].map(a=>`<div class="dline"><span>${a[0]}:</span><span>${a[1]}</span></div>`).join('');cover.src='';Android.selectItem(id);}
 function setCover(url){

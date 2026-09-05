@@ -1,7 +1,7 @@
 plugins { id 'com.android.application' }
 
 android { namespace 'com.bruno.conferente'; compileSdk 35
-    defaultConfig { applicationId 'com.bruno.conferente'; minSdk 26; targetSdk 35; versionCode 39; versionName '31.3.5' }
+    defaultConfig { applicationId 'com.bruno.conferente'; minSdk 26; targetSdk 35; versionCode 40; versionName '31.3.6' }
 }
 
 
